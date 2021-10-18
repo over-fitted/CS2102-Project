@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, Contact, HealthDeclar
 
 CREATE TABLE Departments (
     did INTEGER PRIMARY KEY,
-    dname TEXT NOT NULL
+    dname VARCHAR(50) NOT NULL
 );
 
 --TRIGGER: change meetings that violate upon capacity change from the day after
@@ -12,6 +12,7 @@ CREATE TABLE MeetingRooms (
     room INTEGER CHECK (room > 0),
     rname VARCHAR(50) NOT NULL,
     did INTEGER NOT NULL,
+    date DATE NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     FOREIGN KEY (did) REFERENCES Departments(did),
     PRIMARY KEY (floor, room)
@@ -50,7 +51,7 @@ CREATE TABLE Bookings (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIMESTAMP,
+    time TIME,
     booker_id INTEGER NOT NULL, 
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
