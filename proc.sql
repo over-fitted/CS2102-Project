@@ -119,37 +119,120 @@ AFTER INSERT ON Bookings
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION _tf_deleteBooking();
 
+CREATE OR REPLACE FUNCTION _tf_contactTracing()
+RETURNS TRIGGER AS $$
+DECLARE
+    tempEmployee INTEGER;
+BEGIN
+    IF (NEW.temperature > 37.5) THEN
+        -- ### Delete all booking by this employee
+        DELETE FROM Bookings b
+            WHERE b.booker_id = NEW.eid
+                AND (b.date > NEW.date OR (b.date = NEW.date AND b.time > NEW.time));
+        -- ### Remove employee from all future meetings
+        DELETE FROM Participates p
+            WHERE p.eid = NEW.eid
+                AND (p.date > NEW.date OR (p.date = NEW.date AND p.time > NEW.time));
+        
+        FOR tempEmployee IN SELECT * FROM _f_contact_tracing(NEW.eid)
+        LOOP
+            -- ### Delete all made by close contact employee in the next 7 days
+            DELETE FROM Bookings b
+            WHERE b.booker_id = tempEmployee
+                AND ((b.date - NEW.date > 0 AND b.date - NEW,date <= 7) OR (b.date = NEW.date AND b.time > NEW.time));
+        -- ### Remove close contact employee from all future meetings in the next 7 days
+            DELETE FROM Participates p
+            WHERE p.eid = tempEmployee
+                AND ((p.date - NEW.date > 0 AND p.date - NEW.date <= 7)  OR (p.date = NEW.date AND p.time > NEW.time));
+        END LOOP;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE TRIGGER _t_fever_event
+AFTER INSERT ON HealthDeclaration
+FOR EACH STATEMENT EXECUTE FUNCTION _tf_contactTracing();
+
 /* FUNCTIONS */
 
-/*
 CREATE OR REPLACE FUNCTION _f_contact_tracing
-    (IN employeeId)
+    (IN employeeId INTEGER)
 RETURNS TABLE(closeContactEmployeeId INTEGER) AS $$
 DECLARE
-    curs CURSOR FOR (
-        SELECT p.room, p.floor, p.date, p.time 
-        FROM Participates p 
-        WHERE p.eid);
-    r RECORD;
+    dateDeclare DATE;
+    timeDeclare TIME;
+    meeting record;
 BEGIN
-    OPEN curs;
-    CREATE TEMP TABLE closeContactId (empId INTEGER);
+    -- ### Find latest date of declaration if temperature is over 37.5
+    SELECT h.date INTO dateDeclare
+        FROM HealthDeclaration h
+        WHERE h.temperature > 37.5
+            AND h.eid = employeeId
+        ORDER BY h.date DESC
+        LIMIT 1;
+    
+    -- ### Find latest time of declaration if temperature is over 37.5
+    SELECT h.time INTO timeDeclare
+        FROM HealthDeclaration h
+        WHERE h.temperature > 37.5
+            AND h.eid = employeeId
+        ORDER BY h.date DESC, h.time DESC
+        LIMIT 1;
 
-    LOOP
-        FETCH curs INTO r;
-        EXIT WHEN NOT FOUND;
-        closeContactId UNION (
-            SELECT p.eid 
-            FROM Participates p 
-            WHERE r.room = p.room
-                AND r.floor = p.floor
-                AND r.date = p.date
-                AND r.time = p.time)
-    END LOOP
-    CLOSE curs;
+    -- ### No fever
+    IF (dateDeclare IS NULL) THEN
+        RETURN;
+    ELSE
+        CREATE TEMP TABLE attendedMeeting(room INTEGER, floor INTEGER, date DATE, time TIME);
+        CREATE TEMP TABLE closeContactId (empId INTEGER);
+
+        -- ### Find all the meetings the person with fever attended
+        INSERT INTO attendedMeeting
+            SELECT p.room, p.floor, p.date, p.time
+            FROM Participates p
+            WHERE p.eid = employeeId
+                AND ((dateDeclare - p.date > 0 AND dateDeclare - p.date <= 3) OR (dateDeclare = p.date AND timeDeclare > p.time));
+        
+        -- ### Add in everyone who attending the meeting the person with fever attended
+        FOR meeting IN (
+            SELECT room, floor, date, time
+            FROM attendedMeeting
+        )
+        LOOP
+            SELECT * FROM closeContactId
+            UNION
+            SELECT p.eid
+            FROM Participates p
+            WHERE p.room = meeting.room
+                AND p.floor = meeting.floor
+                AND p.date = meeting.date
+                AND p.time = meeting.time;
+        END LOOP;
+        RETURN QUERY SELECT * FROM closeContactId;
+    END IF;
 END;
-$$ LANGUAGE plpgsql
-*/
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION _f_non_compliance
+    (IN startDate DATE, IN endDate DATE)
+RETURNS TABLE(employeeId INTEGER, numDays INTEGER) AS $$
+BEGIN
+    -- ### Get rid of multiple declaration per day
+    CREATE TEMP TABLE distinctDeclaration(date DATE, time TIME, eid INTEGER, temperature INTEGER);
+    INSERT INTO distinctDeclaration
+        SELECT DISTINCT h.date, h.eid
+        FROM HealthDeclaration h;
+
+    -- ### Select employeeid's whose declaration are within the date range and have not made atleast one declaration a day
+    RETURN QUERY SELECT h.eid AS employeeId, ((endDate - startDate) - COUNT(h.eid)) AS numDays
+                    FROM distinctDeclaration h
+                    WHERE (h.date >= startDate AND h.date <= endDate)
+                    GROUP BY h.eid
+                    HAVING COUNT(h.eid) < (endDate - startDate);
+END;
+$$ LANGUAGE plpgsql;
 
 /* PROCEDURES */
 
@@ -207,17 +290,17 @@ BEGIN
         END IF;
     END LOOP;
 END;
-
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE _p_declare_health
-    (IN employeeId INTEGER, IN inDate DATE, IN temperature INTEGER)
+    (IN eid INTEGER, IN date DATE, IN temperature INTEGER, IN inTime TIME)
 AS $$
 BEGIN
     INSERT INTO HealthDeclaration
         VALUES (
-        inDate,
-        employeeId,
+        date,
+        inTime,
+        eid,
         temperature
     ); 
 END;

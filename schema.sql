@@ -39,10 +39,11 @@ CREATE TABLE Contact (
 --TRIGGER: Fever event
 CREATE TABLE HealthDeclaration (
     date DATE,
+    time TIME,
     eid INTEGER NOT NULL,
     temperature INTEGER NOT NULL CHECK (temperature > 30),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
-    PRIMARY KEY (date, eid)
+    PRIMARY KEY (date, time, eid)
 );
 
 --TRIGGER: must have at least one participant, let it be booker
@@ -50,7 +51,7 @@ CREATE TABLE Bookings (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIMESTAMP,
+    time TIME,
     booker_id INTEGER NOT NULL, 
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
@@ -66,7 +67,7 @@ CREATE TABLE Participates (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIMESTAMP,
+    time TIME,
     PRIMARY KEY (eid, room, floor, date, time),
-    FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time)
+    FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
