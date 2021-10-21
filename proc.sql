@@ -105,10 +105,7 @@ CREATE OR REPLACE FUNCTION _tf_bookingNotApproved()
 RETURNS TRIGGER AS $$
 BEGIN
     -- ### Checking if manager has approved
-    IF ((SELECT b.approver_id FROM Bookings b WHERE b.room = NEW.room 
-                                    AND b.floor = NEW.floor 
-                                    AND b.date = NEW.date 
-                                    AND b.time = NEW.time) IS NULL) THEN
+    IF (NEW.approver_id IS NULL) THEN
         RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
         RETURN NULL;
     ELSE
@@ -122,7 +119,7 @@ AFTER INSERT ON Bookings
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingNotApproved();
 
-CREATE OR REPLACE FUNCTION _tf_contactTracing()
+CREATE OR REPLACE FUNCTION _tf_fever_event()
 RETURNS TRIGGER AS $$
 DECLARE
     tempEmployee INTEGER;
@@ -157,36 +154,36 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE TRIGGER _t_fever_event
 AFTER INSERT ON HealthDeclaration
-FOR EACH STATEMENT EXECUTE FUNCTION _tf_contactTracing();
+FOR EACH STATEMENT EXECUTE FUNCTION _tf_fever_event();
 
 /* FUNCTIONS */
 
 CREATE OR REPLACE FUNCTION _f_contact_tracing
-    (IN employeeId INTEGER)
-RETURNS TABLE(closeContactEmployeeId INTEGER) AS $$
+    (IN _i_employeeId INTEGER)
+RETURNS TABLE(_o_closeContactEmployeeId INTEGER) AS $$
 DECLARE
-    dateDeclare DATE;
-    timeDeclare TIME;
-    meeting record;
+    _v_dateDeclare DATE;
+    _v_timeDeclare TIME;
+    _v_meeting RECORD;
 BEGIN
     -- ### Find latest date of declaration if temperature is over 37.5
-    SELECT h.date INTO dateDeclare
+    SELECT h.date INTO _v_dateDeclare
         FROM HealthDeclaration h
         WHERE h.temperature > 37.5
-            AND h.eid = employeeId
+            AND h.eid = _i_employeeId
         ORDER BY h.date DESC
         LIMIT 1;
     
     -- ### Find latest time of declaration if temperature is over 37.5
-    SELECT h.time INTO timeDeclare
+    SELECT h.time INTO _v_timeDeclare
         FROM HealthDeclaration h
         WHERE h.temperature > 37.5
-            AND h.eid = employeeId
+            AND h.eid = _i_employeeId
         ORDER BY h.date DESC, h.time DESC
         LIMIT 1;
 
     -- ### No fever
-    IF (dateDeclare IS NULL) THEN
+    IF (_v_dateDeclare IS NULL) THEN
         RETURN;
     ELSE
         CREATE TEMP TABLE attendedMeeting(room INTEGER, floor INTEGER, date DATE, time TIME);
@@ -196,11 +193,11 @@ BEGIN
         INSERT INTO attendedMeeting
             SELECT p.room, p.floor, p.date, p.time
             FROM Participates p
-            WHERE p.eid = employeeId
-                AND ((dateDeclare - p.date > 0 AND dateDeclare - p.date <= 3) OR (dateDeclare = p.date AND timeDeclare > p.time));
+            WHERE p.eid = _i_employeeId
+                AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (_v_dateDeclare = p.date AND _v_timeDeclare > p.time));
         
         -- ### Add in everyone who attending the meeting the person with fever attended
-        FOR meeting IN (
+        FOR _v_meeting IN (
             SELECT room, floor, date, time
             FROM attendedMeeting
         )
@@ -209,10 +206,10 @@ BEGIN
             UNION
             SELECT p.eid
             FROM Participates p
-            WHERE p.room = meeting.room
-                AND p.floor = meeting.floor
-                AND p.date = meeting.date
-                AND p.time = meeting.time;
+            WHERE p.room = _v_meeting.room
+                AND p.floor = _v_meeting.floor
+                AND p.date = _v_meeting.date
+                AND p.time = _v_meeting.time;
         END LOOP;
         RETURN QUERY SELECT * FROM closeContactId;
     END IF;
@@ -220,7 +217,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION _f_non_compliance
-    (IN startDate DATE, IN endDate DATE)
+    (IN _i_startDate DATE, IN _i_endDate DATE)
 RETURNS TABLE(employeeId INTEGER, numDays INTEGER) AS $$
 BEGIN
     -- ### Get rid of multiple declaration per day
@@ -230,64 +227,64 @@ BEGIN
         FROM HealthDeclaration h;
 
     -- ### Select employeeid's whose declaration are within the date range and have not made atleast one declaration a day
-    RETURN QUERY SELECT h.eid AS employeeId, ((endDate - startDate) - COUNT(h.eid)) AS numDays
+    RETURN QUERY SELECT h.eid AS employeeId, ((_i_endDate - _i_startDate) - COUNT(h.eid)) AS numDays
                     FROM distinctDeclaration h
-                    WHERE (h.date >= startDate AND h.date <= endDate)
+                    WHERE (h.date >= _i_startDate AND h.date <= _i_endDate)
                     GROUP BY h.eid
-                    HAVING COUNT(h.eid) < (endDate - startDate);
+                    HAVING COUNT(h.eid) < (_i_endDate - _i_startDate);
 END;
 $$ LANGUAGE plpgsql;
 
 /* PROCEDURES */
 
 CREATE OR REPLACE PROCEDURE _p_approve_meeting
-    (IN floorNumber INTEGER, IN roomNumber INTEGER, IN inputDate DATE, IN startHour TIMESTAMP, IN endHour TIMESTAMP, IN managerEid INTEGER)
+    (IN _i_floorNumber INTEGER, IN _i_roomNumber INTEGER, IN _i_inputDate DATE, IN _i_startHour TIMESTAMP, IN _i_endHour TIMESTAMP, IN _i_managerEid INTEGER)
 AS $$
 
 <<BeginLabel>>
 DECLARE
-    tempStartHour INTEGER := startHour;
-    employeeId INTEGER;
-    employeeDept INTEGER;
-    managerDept INTEGER;
+    _v_tempStartHour INTEGER := _i_startHour;
+    _v_employeeId INTEGER;
+    _v_employeeDept INTEGER;
+    _v_managerDept INTEGER;
 BEGIN   
     -- ### Ensure input is correct
-    IF (startHour > endHour) THEN
+    IF (_i_startHour > _i_endHour) THEN
         EXIT BeginLabel;
     END IF;
     
     <<MainLoop>>
     LOOP
         -- ### All the bookings have been approved then exit
-        EXIT WHEN tempStartHour > endHour;
+        EXIT WHEN _v_tempStartHour > _i_endHour;
         
         -- ### Checks whether employee's department is the same as the manager's department
-        SELECT e.did INTO managerDept
+        SELECT e.did INTO _v_managerDept
         FROM Employees e
-        WHERE e.eid = managerEid;
+        WHERE e.eid = _i_managerEid;
 
-        SELECT b.booker_id INTO employeeId
+        SELECT b.booker_id INTO _v_employeeId
         FROM Bookings b
-        WHERE b.floor = floorNumber
-                AND b.room = roomNumber
-                AND b.date = inputDate
-                AND startHour = startHour;
+        WHERE b.floor = _i_floorNumber
+                AND b.room = _i_roomNumber
+                AND b.date = _i_inputDate
+                AND startHour = _i_startHour;
         
-        SELECT b.did INTO employeeDept
+        SELECT b.did INTO _v_employeeDept
         FROM Employees e
-        WHERE e.eid = employeeId;
+        WHERE e.eid = _v_employeeId;
 
         -- ### Approve all bookings until employeeDept != mangerDept
-        IF (managerDept = employeeDeptId) THEN
+        IF (_v_managerDept = _v_employeeDept) THEN
             UPDATE Bookings b
-                SET approver_id = managerEid
+                SET approver_id = _i_managerEid
                 WHERE 
                     b.floor = floorNumber
                     AND b.room = roomNumber
                     AND b.date = inputDate
-                    AND startHour = tempStartHour;
+                    AND startHour = _v_tempStartHour;
             
-            tempStartHour = tempStartHour + 1;
+            _v_tempStartHour = _v_tempStartHour + 1;
         ELSE
             RAISE EXCEPTION 'Employee Department and Manger Department are different';
             EXIT MainLoop;
@@ -297,15 +294,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE _p_declare_health
-    (IN eid INTEGER, IN date DATE, IN temperature INTEGER, IN inTime TIME)
+    (IN _i_eid INTEGER, IN _i_date DATE, IN _i_temperature INTEGER, IN _i_time TIME)
 AS $$
 BEGIN
     INSERT INTO HealthDeclaration
         VALUES (
         date,
-        inTime,
-        eid,
-        temperature
+        _i_time,
+        _i_eid,
+        _i_temperature
     ); 
 END;
 $$ LANGUAGE plpgsql;
