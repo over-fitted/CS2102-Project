@@ -14,7 +14,7 @@ CREATE TABLE MeetingRooms (
     did INTEGER NOT NULL,
     date DATE NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
-    FOREIGN KEY (did) REFERENCES Departments(did),
+    FOREIGN KEY (did) REFERENCES Departments(did) ON DELETE CASCADE,
     PRIMARY KEY (floor, room)
 );
 
@@ -32,8 +32,10 @@ CREATE TABLE Employees (
 --TODO: Check format of contact number
 --TRIGGER: employees must have contact
 CREATE TABLE Contact (
-    eid INTEGER PRIMARY KEY,
-    phone VARCHAR(50),
+    eid INTEGER,
+    phone VARCHAR(50) UNIQUE,
+
+    PRIMARY KEY (eid, phone),
     FOREIGN KEY (eid) REFERENCES Employees(eid) -- intentional no cascade to check for bad eid modification
 );
 
@@ -41,7 +43,7 @@ CREATE TABLE Contact (
 CREATE TABLE HealthDeclaration (
     date DATE,
     eid INTEGER NOT NULL,
-    temperature INTEGER NOT NULL CHECK (temperature > 30),
+    temperature INTEGER NOT NULL CHECK (temperature > 34 AND temperature < 43),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
     PRIMARY KEY (date, eid)
 );
@@ -56,7 +58,7 @@ CREATE TABLE Bookings (
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
     FOREIGN KEY (approver_id) REFERENCES Employees (eid),
-    FOREIGN KEY (room, floor) REFERENCES MeetingRooms(room, floor),
+    FOREIGN KEY (room, floor) REFERENCES MeetingRooms(room, floor) ON DELETE CASCADE,
     PRIMARY KEY (room, floor, date, time)
 );
 
@@ -69,5 +71,5 @@ CREATE TABLE Participates (
     date DATE,
     time TIMESTAMP,
     PRIMARY KEY (eid, room, floor, date, time),
-    FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time)
+    FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );

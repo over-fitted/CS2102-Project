@@ -1,5 +1,7 @@
 /* # TRIGGERS & TRIGGER FUNCTIONS # */
 
+
+
 /* ## Enforcing data integrity ## */
 /* ## Note: All triggers here are initially deferred. ## */
 
@@ -8,22 +10,20 @@
 -- #### Enforcing at insertion into Employees #### 
 CREATE OR REPLACE FUNCTION _tf_employeeHasContact_insertEmployee()
 RETURNS TRIGGER AS $$
-DECLARE 
-    number INTEGER := 0;
 BEGIN 
-    SELECT COUNT(*) INTO number
-    FROM Contact c
-    WHERE NEW.eid = c.eid;
-    IF (number = 0) THEN 
-        RAISE NOTICE 'Employee has no contact, insert blocked';
+    RAISE NOTICE 'TRIGGER: Checking that employee % has a contact after insertion', NEW.eid;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Contact c
+        WHERE NEW.eid = c.eid;
+    ) THEN
+        RAISE EXCEPTION 'Employee has no contact!';
         RETURN NULL;
     ELSE
         RETURN NEW;
     END IF;
 END;
 $$ LANGUAGE plpgsql;
-
-
 
 CREATE CONSTRAINT TRIGGER _t_employeeHasContact_insertEmployee
 AFTER INSERT ON Employees
@@ -33,18 +33,18 @@ FOR EACH ROW EXECUTE FUNCTION _tf_employeeHasContact_insertEmployee();
 -- #### Enforcing at removal from Contact
 CREATE OR REPLACE FUNCTION _tf_employeeHasContact_removeContact()
 RETURNS TRIGGER AS $$
-DECLARE 
-    number INTEGER := 0;
 BEGIN 
-    SELECT COUNT(*) INTO number
-    FROM Contact c
-    WHERE OLD.eid = c.eid
-        AND OLD.phone != c.phone;
-    IF (number = 0) THEN 
+    RAISE NOTICE 'TRIGGER: Checking that employee % has contact after removal of contact', OLD.eid;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Contact c
+        WHERE OLD.eid = c.eid
+            AND OLD.phone != c.phone;
+    ) THEN
         RAISE NOTICE 'Employee has no contact';
         RETURN NULL;
     ELSE
-        RETURN NEW;
+        RETURN OLD;
     END IF;
 END;
 $$ LANGUAGE plpgsql;
@@ -58,14 +58,27 @@ FOR EACH ROW EXECUTE FUNCTION _tf_employeeHasContact_removeContact();
 CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
 RETURNS TRIGGER AS $$
 BEGIN 
-    INSERT INTO Participates 
-    VALUES (
-        NEW.booker_id,
-        NEW.room,
-        NEW.floor,
-        NEW.date,
-        NEW.time
-    );
+    RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
+        NEW.booker, NEW.room, NEW.floor, NEW.date, NEW.time;
+    -- see if new row is already in participates
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Participates p
+        WHERE p.booker_id = NEW.booker
+            AND p.room = NEW.room
+            AND p.floor = NEW.floor
+            AND p.date = NEW.date 
+            AND p.time = NEW.time
+    ) THEN
+        INSERT INTO Participates 
+        VALUES (
+            NEW.booker_id,
+            NEW.room,
+            NEW.floor,
+            NEW.date,
+            NEW.time
+        );
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -78,14 +91,16 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
 CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
 RETURNS TRIGGER AS $$
 DECLARE
-    currentCapacity INTEGER;
-    capacity INTEGER;
+    _v_currentCapacity INTEGER;
+    _v_capacity INTEGER;
 BEGIN 
-    SELECT COUNT(*) INTO currentCapacity
+    RAISE NOTICE 'TRIGGER: Checking if booking made by % in room %, floor %, date %, time % is within capacity', 
+        NEW.booker, NEW.room, NEW.floor, NEW.date, NEW.time;
+    SELECT COUNT(*) INTO _v_currentCapacity
     FROM Participates p 
     GROUP BY p.room, p.floor, p.date, p.time;
 
-    SELECT m.capacity INTO capacity
+    SELECT m.capacity INTO _v_capacity
     FROM MeetingRooms;
 
     IF (currentCapacity = capacity) THEN
@@ -120,6 +135,7 @@ DECLARE
     );
     r RECORD;
 BEGIN 
+    RAISE NOTICE 'TRIGGER: Checking and removing rows that violate new capacity for room % floor %', NEW.room, NEW.floor;
     OPEN curs;
     LOOP
         FETCH curs INTO r;
@@ -148,25 +164,23 @@ CREATE OR REPLACE TRIGGER _t_removeViolatingBookings
 AFTER UPDATE ON MeetingRooms
 FOR EACH ROW EXECUTE FUNCTION _tf_removeViolatingBookings();
 
--- ### Resignation of employee should remove all future bookings
-CREATE OR REPLACE TRIGGER _t_bookingWithinCapacity
-BEFORE INSERT ON Participates
-FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
+
 
 /* ## Application function triggers ## */
--- ### Changing room capacity should trigger a removal of all violating future bookings
+-- ### Resigning of an employee should trigger a removal of all future bookings he has made ###
 CREATE OR REPLACE FUNCTION _tf_removeResignedBookings()
 RETURNS TRIGGER AS $$
 DECLARE 
     curs CURSOR FOR (
         SELECT b.room, b.floor, b.date, b.time
         FROM Bookings b
-        WHERE b.booker_id = OLD.eid
-            AND OLD.date IS NOT NULL -- resigned
-            AND b.date > OLD.date
+        WHERE b.booker_id = NEW.eid
+            AND NEW.resigned_date IS NOT NULL -- resigned
+            AND b.date > NEW.resigned_date
     );
     r RECORD;
 BEGIN 
+    RAISE NOTICE 'TRIGGER: Employee % resigned, checking and removing future bookings he made after %', NEW.eid, NEW.resigned_date;   
     OPEN curs;
     LOOP
         FETCH curs INTO r;
@@ -247,9 +261,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ### Adding a department ###
+-- ### Removing a department ###
 CREATE OR REPLACE PROCEDURE remove_department
-    (IN did INTEGER)
+    (IN _i_did INTEGER)
 AS $$
 BEGIN
     /* 
@@ -257,7 +271,7 @@ BEGIN
     No need to enforce with triggers, will throw exception
     */
     DELETE FROM Departments d
-    WHERE d.did = did;
+    WHERE d.did = _i_did;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -266,8 +280,6 @@ CREATE OR REPLACE PROCEDURE add_room
     (IN floor INTEGER, IN room INTEGER, IN rname VARCHAR(50), 
     IN did INTEGER, IN capacity INTEGER)
 AS $$
-DECLARE
-    defaultaDate DATE := 0;
 BEGIN
     INSERT INTO MeetingRooms
     VALUES(floor, room, rname, did, capacity);
@@ -276,48 +288,45 @@ $$ LANGUAGE plpgsql;
 
 -- ### Changing meeting room capacity ###
 CREATE OR REPLACE PROCEDURE change_capacity
-    (IN floor INTEGER, IN room INTEGER, IN capacity INTEGER, IN date DATE)
+    (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE)
 AS $$
 BEGIN
-    UPDATE MeetingRooms m
-    SET m.capacity = capacity
-    WHERE m.floor = floor AND m.room = room;
+    UPDATE MeetingRooms 
+    SET capacity = _i_capacity
+    WHERE floor = _i_floor AND room = _i_room;
 END;
 $$ LANGUAGE plpgsql;
 
 
 -- ### Add employee ###
 CREATE OR REPLACE PROCEDURE add_employee
-    (IN ename VARCHAR(50), IN phone VARCHAR(50), IN etype VARCHAR(7), IN did INTEGER)
+    (IN _i_ename VARCHAR(50), IN _i_phone VARCHAR(50), IN _i_etype VARCHAR(7), IN _i_did INTEGER)
 AS $$
 DECLARE
-    eid INTEGER;
-    email VARCHAR(50);
+    _v_eid INTEGER;
+    _v_email VARCHAR(50);
 BEGIN
-    SELECT COUNT(DISTINCT eid) + 1 INTO eid
+    SELECT COUNT(DISTINCT eid) + 1 INTO _v_eid
     FROM Employees;
 
-    SELECT CONCAT(CAST(eid AS VARCHAR(50)), "@office.com") INTO email;
+    SELECT CONCAT(CAST(eid AS VARCHAR(50)), '@office.com') INTO _v_email;
 
     INSERT INTO Employees
-    VALUES(eid, ename, email, etype, did);
+    VALUES(_v_eid, _i_ename, _v_email, _i_etype, _i_did, NULL);
 
     INSERT INTO Contact
-    VALUES(eid, phone);
+    VALUES(_v_eid, _i_phone);
 END;
 $$ LANGUAGE plpgsql;
 
 
 -- ### Remove employee (make resign) ###
 CREATE OR REPLACE PROCEDURE remove_employee
-    (IN eid INTEGER, IN date DATE)
+    (IN _i_eid INTEGER, IN _i_date DATE)
 AS $$
-DECLARE
-    eid INTEGER;
-    email VARCHAR(50);
 BEGIN
-    UPDATE Employees e
-    SET e.resigned_date = date
-    WHERE e.eid = eid;
+    UPDATE Employees
+    SET resigned_date = _i_date
+    WHERE eid = _i_eid;
 END;
 $$ LANGUAGE plpgsql;
