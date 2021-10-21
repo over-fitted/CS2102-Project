@@ -4,10 +4,12 @@
 /* ## Note: All triggers here are initially deferred. ## */
 
 -- ### All Bookings must have at least one participant, which is the booker ###
+
+/*
 CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
 RETURNS TRIGGER AS $$
 
-/*
+
 BEGIN 
     RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
         NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
@@ -35,9 +37,12 @@ $$ LANGUAGE plpgsql;
 
 */
 
+/*
 CREATE OR REPLACE TRIGGER _t_bookingInsertBooker
 AFTER INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
+
+*/
 
 -- ### A booking cannot have more participants than the stated capacity ###
 CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
@@ -153,9 +158,21 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
 -- ### A Booking which is not immedietely approved by manager is removed
 CREATE OR REPLACE FUNCTION _tf_bookingNotApproved() 
 RETURNS TRIGGER AS $$
+
+DECLARE
+    apporver INTEGER;
+
 BEGIN
     -- ### Checking if manager has approved
-    IF (NEW.approver_id IS NULL) THEN
+    SELECT b.approver_id INTO apporver
+    FROM Bookings b
+    WHERE b.floor = NEW.floor
+        AND b.room = NEW.room
+        AND b.date = NEW.date
+        AND b.time = NEW.time
+        AND b.booker_id = NEW.booker_id;
+    
+    IF (apporver IS NULL) THEN
         RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
         RETURN NULL;
     ELSE
@@ -441,35 +458,34 @@ BEGIN
         WHERE b.floor = _i_floorNumber
                 AND b.room = _i_roomNumber
                 AND b.date = _i_inputDate
-                AND b.time = _i_startHour;
+                AND b.time = _v_tempStartHour;
         
         SELECT e.did INTO _v_employeeDept
         FROM Employees e
         WHERE e.eid = _v_employeeId;
 
-        
+       
         -- ### If manger department is null he has resigned or doesnt exist
         IF (_v_managerDept IS NULL) THEN
             RAISE EXCEPTION 'Manager is Resigned';
         END IF;
+
 
         -- ### Approve all bookings until employeeDept != mangerDept
         IF (_v_managerDept = _v_employeeDept) THEN
             UPDATE Bookings b
                 SET approver_id = _i_managerEid
                 WHERE 
-                    b.floor = floorNumber
-                    AND b.room = roomNumber
-                    AND b.date = inputDate
-                    AND startHour = _v_tempStartHour
+                    b.floor = _i_floorNumber
+                    AND b.room = _i_roomNumber
+                    AND b.date = _i_inputDate
+                    AND b.time = _v_tempStartHour
                     AND b.approver_id IS NULL;
         ELSE
-            RAISE NOTICE "Manager Dept is %"_v_managerDept
-            RAISE NOTICE "Employee Dept is %"_v_employeeDept
             RAISE EXCEPTION 'Employee Department and Manger Department are different';
             EXIT MainLoop;
         END IF;
-        _v_tempStartHour = _v_tempStartHour + 1;
+        _v_tempStartHour := _v_tempStartHour + '1 hour'::interval;
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
