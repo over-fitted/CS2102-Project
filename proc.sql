@@ -101,11 +101,14 @@ BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
 
 -- ### A Booking which is not immedietely approved by manager is removed
-CREATE OR REPLACE FUNCTION _tf_deleteBooking() 
+CREATE OR REPLACE FUNCTION _tf_bookingNotApproved() 
 RETURNS TRIGGER AS $$
 BEGIN
     -- ### Checking if manager has approved
-    IF ((SELECT b.approver.id FROM Bookings b WHERE b.booker_id = NEW.booker_id) IS NULL) THEN
+    IF ((SELECT b.approver_id FROM Bookings b WHERE b.room = NEW.room 
+                                    AND b.floor = NEW.floor 
+                                    AND b.date = NEW.date 
+                                    AND b.time = NEW.time) IS NULL) THEN
         RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
         RETURN NULL;
     ELSE
@@ -117,7 +120,7 @@ $$ LANGUAGE plpgsql;
 CREATE CONSTRAINT TRIGGER _t_bookingNotApproved
 AFTER INSERT ON Bookings
 DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION _tf_deleteBooking();
+FOR EACH ROW EXECUTE FUNCTION _tf_bookingNotApproved();
 
 CREATE OR REPLACE FUNCTION _tf_contactTracing()
 RETURNS TRIGGER AS $$
@@ -125,6 +128,7 @@ DECLARE
     tempEmployee INTEGER;
 BEGIN
     IF (NEW.temperature > 37.5) THEN
+        RAISE NOTICE 'Employee % has fever', NEW.eid;
         -- ### Delete all booking by this employee
         DELETE FROM Bookings b
             WHERE b.booker_id = NEW.eid
