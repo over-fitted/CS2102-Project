@@ -25,18 +25,12 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    -- Bookable derived attribute checking ISA Manger, Senior
+    home_number VARCHAR(50),
+    mobile_number VARCHAR(50),
+    office_number VARCHAR(50),
+    
+    CONSTRAINT _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
     FOREIGN KEY (did) REFERENCES Departments(did)
-);
-
---TODO: Check format of contact number
---TRIGGER: employees must have contact
-CREATE TABLE Contact (
-    eid INTEGER,
-    phone VARCHAR(50) UNIQUE,
-
-    PRIMARY KEY (eid, phone),
-    FOREIGN KEY (eid) REFERENCES Employees(eid) -- intentional no cascade to check for bad eid modification
 );
 
 --TRIGGER: Fever event
@@ -69,7 +63,8 @@ CREATE TABLE Participates (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIMESTAMP,
+    time TIME,
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
+

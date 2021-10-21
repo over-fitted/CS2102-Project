@@ -3,56 +3,7 @@
 
 
 /* ## Enforcing data integrity ## */
-/* ## Note: All triggers here are initially deferred. ## */
-
--- ### All Employees must have at least one contact ###
-
--- #### Enforcing at insertion into Employees #### 
-CREATE OR REPLACE FUNCTION _tf_employeeHasContact_insertEmployee()
-RETURNS TRIGGER AS $$
-BEGIN 
-    RAISE NOTICE 'TRIGGER: Checking that employee % has a contact after insertion', NEW.eid;
-    IF NOT EXISTS (
-        SELECT 1
-        FROM Contact c
-        WHERE NEW.eid = c.eid;
-    ) THEN
-        RAISE EXCEPTION 'Employee has no contact!';
-        RETURN NULL;
-    ELSE
-        RETURN NEW;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE CONSTRAINT TRIGGER _t_employeeHasContact_insertEmployee
-AFTER INSERT ON Employees
-DEFERRABLE INITIALLY DEFERRED
-FOR EACH ROW EXECUTE FUNCTION _tf_employeeHasContact_insertEmployee();
-
--- #### Enforcing at removal from Contact
-CREATE OR REPLACE FUNCTION _tf_employeeHasContact_removeContact()
-RETURNS TRIGGER AS $$
-BEGIN 
-    RAISE NOTICE 'TRIGGER: Checking that employee % has contact after removal of contact', OLD.eid;
-    IF NOT EXISTS (
-        SELECT 1
-        FROM Contact c
-        WHERE OLD.eid = c.eid
-            AND OLD.phone != c.phone;
-    ) THEN
-        RAISE NOTICE 'Employee has no contact';
-        RETURN NULL;
-    ELSE
-        RETURN OLD;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE TRIGGER _t_employeeHasContact_removeContact
-BEFORE DELETE ON Contact
-FOR EACH ROW EXECUTE FUNCTION _tf_employeeHasContact_removeContact();
-
+/* Note: All triggers here are initially deferred. ## */
 
 -- ### All Bookings must have at least one participant, which is the booker ###
 CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
@@ -261,6 +212,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+
 -- ### Removing a department ###
 CREATE OR REPLACE PROCEDURE remove_department
     (IN _i_did INTEGER)
@@ -288,9 +240,12 @@ $$ LANGUAGE plpgsql;
 
 -- ### Changing meeting room capacity ###
 CREATE OR REPLACE PROCEDURE change_capacity
-    (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE)
+    (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE, IN _i_eid INTEGER)
 AS $$
 BEGIN
+    -- check if employer changing capacity is a mananger of the department
+
+
     UPDATE MeetingRooms 
     SET capacity = _i_capacity
     WHERE floor = _i_floor AND room = _i_room;
@@ -300,7 +255,9 @@ $$ LANGUAGE plpgsql;
 
 -- ### Add employee ###
 CREATE OR REPLACE PROCEDURE add_employee
-    (IN _i_ename VARCHAR(50), IN _i_phone VARCHAR(50), IN _i_etype VARCHAR(7), IN _i_did INTEGER)
+    (IN _i_ename VARCHAR(50), IN _i_home_number VARCHAR(50),
+        IN _i_mobile_number VARCHAR(50), IN _i_office_number VARCHAR(50), 
+        IN _i_etype VARCHAR(7), IN _i_did INTEGER)
 AS $$
 DECLARE
     _v_eid INTEGER;
@@ -312,7 +269,8 @@ BEGIN
     SELECT CONCAT(CAST(eid AS VARCHAR(50)), '@office.com') INTO _v_email;
 
     INSERT INTO Employees
-    VALUES(_v_eid, _i_ename, _v_email, _i_etype, _i_did, NULL);
+    VALUES(_v_eid, _i_ename, _v_email, _i_etype, _i_did, 
+        NULL, _i_home_number, _i_mobile_number, _i_office_number);
 
     INSERT INTO Contact
     VALUES(_v_eid, _i_phone);
