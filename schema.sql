@@ -41,7 +41,7 @@ CREATE TABLE HealthDeclaration (
     date DATE,
     time TIME,
     eid INTEGER NOT NULL,
-    temperature INTEGER NOT NULL CHECK (temperature > 30),
+    temperature NUMERIC NOT NULL CHECK (temperature > 30),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
     PRIMARY KEY (date, time, eid)
 );
