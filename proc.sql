@@ -501,7 +501,8 @@ BEGIN
                     ON h.eid = e.eid
                     WHERE ((h.date >= _i_startDate AND h.date <= _i_endDate) OR h.date IS NULL)
                     GROUP BY e.eid
-                    HAVING COUNT(h.eid) <= (_i_endDate - _i_startDate);
+                    HAVING COUNT(h.eid) <= (_i_endDate - _i_startDate)
+                    ORDER BY numDays DESC;
 END;
 $$ LANGUAGE plpgsql;
 
