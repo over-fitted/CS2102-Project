@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, Contact, HealthDeclaration, Bookings, Participates CASCADE;
+DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, HealthDeclaration, Bookings, Participates CASCADE;
 
 CREATE TABLE Departments (
     did INTEGER PRIMARY KEY,
@@ -25,9 +25,9 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    home_number VARCHAR(50),
-    mobile_number VARCHAR(50),
-    office_number VARCHAR(50),
+    home_number VARCHAR(50) UNIQUE,
+    mobile_number VARCHAR(50) UNIQUE,
+    office_number VARCHAR(50) UNIQUE,
     
     CONSTRAINT _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
     FOREIGN KEY (did) REFERENCES Departments(did)
@@ -59,11 +59,11 @@ CREATE TABLE Bookings (
 --TRIGGER: Check capacity
 --TRIGGER: When create a booking, insert booker into
 CREATE TABLE Participates (
-    eid INTEGER,
+    eid INTEGER UNIQUE,
     room INTEGER,
     floor INTEGER,
-    date DATE,
-    time TIME,
+    date DATE UNIQUE,
+    time TIME UNIQUE,
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );

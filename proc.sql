@@ -10,12 +10,12 @@ CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
 RETURNS TRIGGER AS $$
 BEGIN 
     RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
-        NEW.booker, NEW.room, NEW.floor, NEW.date, NEW.time;
+        NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
     -- see if new row is already in participates
     IF NOT EXISTS (
         SELECT 1
         FROM Participates p
-        WHERE p.booker_id = NEW.booker
+        WHERE p.eid = NEW.booker_id
             AND p.room = NEW.room
             AND p.floor = NEW.floor
             AND p.date = NEW.date 
@@ -30,6 +30,7 @@ BEGIN
             NEW.time
         );
     END IF;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -45,16 +46,16 @@ DECLARE
     _v_currentCapacity INTEGER;
     _v_capacity INTEGER;
 BEGIN 
-    RAISE NOTICE 'TRIGGER: Checking if booking made by % in room %, floor %, date %, time % is within capacity', 
-        NEW.booker, NEW.room, NEW.floor, NEW.date, NEW.time;
+    RAISE NOTICE 'TRIGGER: Checking if booking in room %, floor %, date %, time % is within capacity', 
+        NEW.room, NEW.floor, NEW.date, NEW.time;
     SELECT COUNT(*) INTO _v_currentCapacity
     FROM Participates p 
     GROUP BY p.room, p.floor, p.date, p.time;
 
     SELECT m.capacity INTO _v_capacity
-    FROM MeetingRooms;
+    FROM MeetingRooms m;
 
-    IF (currentCapacity = capacity) THEN
+    IF (_v_currentCapacity = _v_capacity) THEN
         RAISE NOTICE 'Meeting booking is full!';
         RETURN NULL;
     ELSE
@@ -108,6 +109,7 @@ BEGIN
 
     END LOOP;
     CLOSE curs;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -229,12 +231,14 @@ $$ LANGUAGE plpgsql;
 
 -- ### Adding a room ###
 CREATE OR REPLACE PROCEDURE add_room
-    (IN floor INTEGER, IN room INTEGER, IN rname VARCHAR(50), 
-    IN did INTEGER, IN capacity INTEGER)
+    (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_rname VARCHAR(50), 
+    IN _i_did INTEGER, IN _i_capacity INTEGER)
 AS $$
+DECLARE 
+    _v_defaultDate DATE:= '1971-01-01';
 BEGIN
     INSERT INTO MeetingRooms
-    VALUES(floor, room, rname, did, capacity);
+    VALUES(_i_floor, _i_room, _i_rname, _i_did, _v_defaultDate, _i_capacity);
 END;
 $$ LANGUAGE plpgsql;
 
@@ -244,11 +248,21 @@ CREATE OR REPLACE PROCEDURE change_capacity
 AS $$
 BEGIN
     -- check if employer changing capacity is a mananger of the department
-
-
-    UPDATE MeetingRooms 
-    SET capacity = _i_capacity
-    WHERE floor = _i_floor AND room = _i_room;
+    IF EXISTS (
+        SELECT 1
+        FROM (Departments NATURAL JOIN Employees) d, MeetingRooms m
+        WHERE d.did = m.did
+            AND m.room = _i_room
+            AND m.floor = _i_floor
+            AND d.eid = _i_eid
+            AND d.etype = 'Manager'
+    ) THEN
+        UPDATE MeetingRooms 
+        SET capacity = _i_capacity
+        WHERE floor = _i_floor AND room = _i_room;
+    ELSE 
+        RAISE NOTICE 'Manager % is not a manager of the department', _i_eid;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
