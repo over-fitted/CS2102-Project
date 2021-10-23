@@ -1,76 +1,51 @@
-/* # TRIGGERS & TRIGGER FUNCTIONS # */
+/* ===== TRIGGERS ===== */
 
-
-
-/* ## Enforcing data integrity ## */
-/* Note: All triggers here are initially deferred. ## */
-
--- ### All Bookings must have at least one participant, which is the booker ###
-CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
+/*
+This trigger ensures that if an employee resigns, his future bookings are removed.
+It also ensures that an update to the resigned field is done exactly once.
+*/
+CREATE OR REPLACE FUNCTION _tf_removeResignedBookings()
 RETURNS TRIGGER AS $$
+DECLARE 
+    curs CURSOR FOR (
+        SELECT b.room, b.floor, b.date, b.time
+        FROM Bookings b
+        WHERE b.booker_id = NEW.eid
+            AND NEW.resigned_date IS NOT NULL -- resigned
+            AND b.date > NEW.resigned_date
+    );
+    r RECORD;
 BEGIN 
-    RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
-        NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
-    -- see if new row is already in participates
-    IF NOT EXISTS (
-        SELECT 1
-        FROM Participates p
-        WHERE p.eid = NEW.booker_id
-            AND p.room = NEW.room
-            AND p.floor = NEW.floor
-            AND p.date = NEW.date 
-            AND p.time = NEW.time
-    ) THEN
-        INSERT INTO Participates 
-        VALUES (
-            NEW.booker_id,
-            NEW.room,
-            NEW.floor,
-            NEW.date,
-            NEW.time
-        );
+    RAISE NOTICE 'TRIGGER: Checking employee % has resigned exactly once', NEW.eid;
+    IF ((OLD.resigned_date IS NOT NULL) AND (NEW.resigned_date IS NOT NULL)) THEN
+      RAISE EXCEPTION 'EXCEPTION: Illegal attempt to update resignation date!';
     END IF;
-    RETURN NULL;
+    RAISE NOTICE 'TRIGGER: Employee % resigned, checking and removing future bookings he made after %', NEW.eid, NEW.resigned_date;   
+    OPEN curs;
+    LOOP
+        FETCH curs INTO r;
+        EXIT WHEN NOT FOUND;
+
+        DELETE FROM Bookings b
+        WHERE b.room = r.room
+            AND b.floor = r.floor
+            AND b.date = r.date
+            AND b.time = r.time;
+
+    END LOOP;
+    CLOSE curs;
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE TRIGGER _t_removeResignedBookings
+AFTER UPDATE ON Employees
+FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
 
-CREATE OR REPLACE TRIGGER _t_bookingInsertBooker
-AFTER INSERT ON Bookings
-FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
-
--- ### A booking cannot have more participants than the stated capacity ###
-CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
-RETURNS TRIGGER AS $$
-DECLARE
-    _v_currentCapacity INTEGER;
-    _v_capacity INTEGER;
-BEGIN 
-    RAISE NOTICE 'TRIGGER: Checking if booking in room %, floor %, date %, time % is within capacity', 
-        NEW.room, NEW.floor, NEW.date, NEW.time;
-    SELECT COUNT(*) INTO _v_currentCapacity
-    FROM Participates p 
-    GROUP BY p.room, p.floor, p.date, p.time;
-
-    SELECT m.capacity INTO _v_capacity
-    FROM MeetingRooms m;
-
-    IF (_v_currentCapacity = _v_capacity) THEN
-        RAISE NOTICE 'Meeting booking is full!';
-        RETURN NULL;
-    ELSE
-        RETURN NEW;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
-
-CREATE OR REPLACE TRIGGER _t_bookingWithinCapacity
-BEFORE INSERT ON Participates
-FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
-
-/* ## Application function triggers ## */
--- ### Changing room capacity should trigger a removal of all violating future bookings
+/*
+@tanyjnaaman
+This trigger ensures thatupon a room capacity change, all future bookings that violate it
+are removed.
+*/
 CREATE OR REPLACE FUNCTION _tf_removeViolatingBookings()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -118,49 +93,168 @@ AFTER UPDATE ON MeetingRooms
 FOR EACH ROW EXECUTE FUNCTION _tf_removeViolatingBookings();
 
 
-
-/* ## Application function triggers ## */
--- ### Resigning of an employee should trigger a removal of all future bookings he has made ###
-CREATE OR REPLACE FUNCTION _tf_removeResignedBookings()
+/*
+@AryanSarswat
+This trigger ensures that a booking that is not approved 
+in the same transaction (i.e. immediately) is deleted.
+*/
+CREATE OR REPLACE FUNCTION _tf_bookingNotApproved() 
 RETURNS TRIGGER AS $$
-DECLARE 
-    curs CURSOR FOR (
-        SELECT b.room, b.floor, b.date, b.time
-        FROM Bookings b
-        WHERE b.booker_id = NEW.eid
-            AND NEW.resigned_date IS NOT NULL -- resigned
-            AND b.date > NEW.resigned_date
-    );
-    r RECORD;
-BEGIN 
-    RAISE NOTICE 'TRIGGER: Employee % resigned, checking and removing future bookings he made after %', NEW.eid, NEW.resigned_date;   
-    OPEN curs;
-    LOOP
-        FETCH curs INTO r;
-        EXIT WHEN NOT FOUND;
 
-        DELETE FROM Bookings b
-        WHERE b.room = r.room
-            AND b.floor = r.floor
-            AND b.date = r.date
-            AND b.time = r.time;
-
-    END LOOP;
-    CLOSE curs;
+DECLARE
+    _v_approver INTEGER;
+BEGIN
+    -- ### Checking if manager has approved
+    SELECT b.approver_id INTO _v_approver
+    FROM Bookings b
+    WHERE b.floor = NEW.floor
+        AND b.room = NEW.room
+        AND b.date = NEW.date
+        AND b.time = NEW.time
+        AND b.booker_id = NEW.booker_id;
+    
+    IF (_v_approver IS NULL) THEN
+        RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
+        RETURN NULL;
+    ELSE
+        RETURN NEW;
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE CONSTRAINT TRIGGER _t_bookingNotApproved
+AFTER INSERT ON Bookings
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION _tf_bookingNotApproved();
 
-CREATE OR REPLACE TRIGGER _t_removeResignedBookings
-AFTER UPDATE ON Employees
-FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
+/*
+@AryanSarswat
+In the event an employee has a fever, he is removed from all future bookings, his bookings
+are cancelled, and all close contacts are removed from meetings in the next 7 days, including
+those they booked (i.e. their bookings that lie in the next 7 days are also deleted.
+
+This trigger enforces these changes.
+*/
+CREATE OR REPLACE FUNCTION _tf_fever_event()
+RETURNS TRIGGER AS $$
+DECLARE
+    _v_tempEmployee INTEGER;
+BEGIN
+    IF (NEW.temperature > 37.5) THEN
+        RAISE NOTICE 'TRIGGER: Employee % has fever', NEW.eid;
+
+        FOR _v_tempEmployee IN (SELECT * FROM _f_contact_tracing(NEW.eid))
+        LOOP
+            RAISE NOTICE'Close contact employees : %', _v_tempEmployee;
+            -- ### Delete booking all made by close contact employee in the next 7 days
+            DELETE FROM Bookings b
+            WHERE b.booker_id = _v_tempEmployee
+                AND ((b.date - NEW.date > 0 AND b.date - NEW.date <= 7) OR (b.date = NEW.date AND b.time > NEW.time));
+            -- ### Remove close contact employee from all future meetings in the next 7 days
+            DELETE FROM Participates p
+            WHERE p.eid = _v_tempEmployee
+                AND ((p.date - NEW.date > 0 AND p.date - NEW.date <= 7)  OR (p.date = NEW.date AND p.time > NEW.time));
+        END LOOP;
+
+        -- ### Delete all booking by this employee
+        DELETE FROM Bookings b
+            WHERE b.booker_id = NEW.eid
+                AND (b.date > NEW.date OR (b.date = NEW.date AND b.time > NEW.time));
+        -- ### Remove employee from all future meetings
+        DELETE FROM Participates p
+            WHERE p.eid = NEW.eid
+                AND (p.date > NEW.date OR (p.date = NEW.date AND p.time > NEW.time));
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;        
+
+CREATE OR REPLACE TRIGGER _t_fever_event
+AFTER INSERT ON HealthDeclaration
+FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
+
+/*
+@tanyjnaaman
+This trigger ensures that a person who booked a meeting will participate in it.
+*/
+CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
+RETURNS TRIGGER AS $$
+BEGIN 
+    RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
+        NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
+    -- see if new row is already in participates
+    IF NOT EXISTS (
+        SELECT 1
+        FROM Participates p
+        WHERE p.eid = NEW.booker_id
+            AND p.room = NEW.room
+            AND p.floor = NEW.floor
+            AND p.date = NEW.date 
+            AND p.time = NEW.time
+    ) THEN
+        INSERT INTO Participates 
+        VALUES (
+            NEW.booker_id,
+            NEW.room,
+            NEW.floor,
+            NEW.date,
+            NEW.time
+        );
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER _t_bookingInsertBooker
+AFTER INSERT ON Bookings
+FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
 
 
+/*
+@tanyjnaaman
+This trigger ensures that a booking that is made is within the booking capacity. 
+If it is not, it blocks the booking.
+*/
+CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
+RETURNS TRIGGER AS $$
+DECLARE
+    _v_currentCapacity INTEGER;
+    _v_capacity INTEGER;
+BEGIN 
+    RAISE NOTICE 'TRIGGER: Checking if booking in room %, floor %, date %, time % is within capacity', 
+        NEW.room, NEW.floor, NEW.date, NEW.time;
+    SELECT COUNT(*) INTO _v_currentCapacity
+    FROM Participates p 
+    GROUP BY p.room, p.floor, p.date, p.time;
 
-/* # FUNCTIONS # */
+    SELECT m.capacity INTO _v_capacity
+    FROM MeetingRooms m;
 
--- ## Helper ## 
--- function to check if a time variable is exactly on the hour
+    IF (_v_currentCapacity = _v_capacity) THEN
+        RAISE NOTICE 'Meeting booking is full!';
+        RETURN NULL;
+    ELSE
+        RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER _t_bookingWithinCapacity
+BEFORE INSERT ON Participates
+FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
+
+/* ===== FUNCTIONS ===== */
+
+-- # HELPER #
+/*
+@tanyjnaaman
+This is a helper function to check if a time that is keyed in is an exact hour.
+
+IN:
+@param TIME _i_ time Time variable
+
+@return BOOLEAN      Indicates if the time is on the hour.
+*/
 CREATE OR REPLACE FUNCTION _f_bookingOnTheHour(IN _i_time TIME)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -173,17 +267,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ## Core ##
+-- # CORE # 
+
+
+/*
+@tanyjnaaman
+This methods searches for rooms that are available given the entirety of a 
+defined time period and given an expected booking capacity needed.
+
+@param INTEGER _i_booking_capacity Expected booking capacity
+@param DATE _i_date                Booking date
+@param TIME _i_time_start          Desired start time
+@param TIME _i_time_end            Desired end time
+
+@return TABLE 
+*/
 CREATE OR REPLACE FUNCTION search_room
     (IN _i_booking_capacity INTEGER, 
         IN _i_date DATE, 
         IN _i_time_start TIME,
-        IN _i_time_end TIME,
-        OUT _o_floor INTEGER,
-        OUT _o_room INTEGER,
-        OUT _o_did INTEGER,
-        OUT _o_capacity INTEGER)
-RETURNS SETOF RECORD AS $$
+        IN _i_time_end TIME)
+RETURNS TABLE(_o_floor INTEGER, _o_room INTEGER, _o_did INTEGER, _o_capacity INTEGER) AS $$
 DECLARE
     _v_validHour BOOLEAN;
 BEGIN
@@ -218,11 +322,200 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+/*
+@AryanSarswat
+This procedure is used to approve a booking.
+
+# TODO - bound start and end hour to hour specifically
+
+@param INTEGER _i_roomNumber  Room number
+@param INTEGER _i_floorNumber Floor number
+@param DATE _i_inputDate      Date of meeting
+@param TIME _i_startHour      Start hour
+@param TIME _i_endHour        End hour
+@param INTEGER _i_managerEid  Manager ID of manager approving
+*/
+CREATE OR REPLACE PROCEDURE approve_meeting
+    (IN _i_roomNumber INTEGER, IN _i_floorNumber INTEGER, IN _i_inputDate DATE, IN _i_startHour TIME, IN _i_endHour TIME, IN _i_managerEid INTEGER)
+AS $$
+
+<<BeginLabel>>
+DECLARE
+    _v_tempStartHour TIME := _i_startHour;
+    _v_employeeId INTEGER;
+    _v_employeeDept INTEGER;
+    _v_managerDept INTEGER;
+BEGIN   
+    -- Ensure input is correct
+    IF (_i_startHour > _i_endHour) THEN
+        EXIT BeginLabel;
+    END IF;
+    
+    <<MainLoop>>
+    LOOP
+        --All the bookings have been approved then exit
+        EXIT WHEN _v_tempStartHour > _i_endHour;
+        
+        -- Checks whether employee's department is the same as the manager's department
+        SELECT e.did INTO _v_managerDept
+        FROM Employees e
+        WHERE e.eid = _i_managerEid
+            AND e.resigned_date IS NULL;
+
+        SELECT b.booker_id INTO _v_employeeId
+        FROM Bookings b
+        WHERE b.floor = _i_floorNumber
+                AND b.room = _i_roomNumber
+                AND b.date = _i_inputDate
+                AND b.time = _v_tempStartHour;
+
+        SELECT e.did INTO _v_employeeDept
+        FROM Employees e
+        WHERE e.eid = _v_employeeId;
+
+       
+        -- If manger department is null he has resigned or doesnt exist
+        IF (_v_managerDept IS NULL) THEN
+            RAISE EXCEPTION 'Manager is Resigned';
+        END IF;
+        
+        -- Approve all bookings until employeeDept != mangerDept
+        IF (_v_managerDept = _v_employeeDept) THEN
+            UPDATE Bookings b
+                SET approver_id = _i_managerEid
+                WHERE 
+                    b.floor = _i_floorNumber
+                    AND b.room = _i_roomNumber
+                    AND b.date = _i_inputDate
+                    AND b.time = _v_tempStartHour
+                    AND b.approver_id IS NULL;
+        ELSE
+            RAISE NOTICE 'Employee Dept: %, Manger Dept: %',_v_employeeDept, _v_managerDept;
+            RAISE EXCEPTION 'Employee Department and Manger Department are different';
+            EXIT MainLoop;
+        END IF;
+        _v_tempStartHour := _v_tempStartHour + '1 hour'::interval;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
 
 
-/* # PROCEDURES # */
--- ## Basic ## 
--- ### Adding a department ###
+
+-- # HEALTH #
+
+/*
+@AryanSarswat
+If an employee has a fever, we perform contact tracing by finding all employees that have 
+been in the same booking as him in the last three days. This method does so. 
+
+@param INTEGER _i_employeeId Employee ID.
+@return TABLE Table of INTEGER Employee ID values that have been in close contact.
+*/
+CREATE OR REPLACE FUNCTION contact_tracing
+    (IN _i_employeeId INTEGER)
+RETURNS TABLE(_o_closeContactEmployeeId INTEGER) AS $$
+DECLARE
+    _v_dateDeclare DATE;
+    _v_timeDeclare TIME;
+    _v_meeting RECORD;
+    print_test INTEGER;
+BEGIN
+    -- ### Find latest date of declaration if temperature is over 37.5
+    SELECT h.date INTO _v_dateDeclare
+        FROM HealthDeclaration h
+        WHERE h.temperature > 37.5
+            AND h.eid = _i_employeeId
+        ORDER BY h.date DESC
+        LIMIT 1;
+    
+
+    -- ### Find latest time of declaration if temperature is over 37.5
+    SELECT h.time INTO _v_timeDeclare
+        FROM HealthDeclaration h
+        WHERE h.temperature > 37.5
+            AND h.eid = _i_employeeId
+        ORDER BY h.date DESC, h.time DESC
+        LIMIT 1;
+
+    -- ### No fever
+    IF (_v_dateDeclare IS NULL) THEN
+        RETURN;
+    ELSE
+        DROP TABLE IF EXISTS attendedMeeting;
+        DROP TABLE IF EXISTS closeContactId;
+
+        CREATE TEMP TABLE attendedMeeting(room INTEGER, floor INTEGER, date DATE, time TIME);
+        CREATE TEMP TABLE closeContactId (empId INTEGER);
+
+        -- ### Find all the meetings the person with fever attended
+        INSERT INTO attendedMeeting
+            SELECT p.room, p.floor, p.date, p.time
+            FROM Participates p
+            WHERE p.eid = _i_employeeId
+                AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval));
+        
+        -- ### Add in everyone who had attended a the meeting with person with fever
+        FOR _v_meeting IN (
+            SELECT room, floor, date, time
+            FROM attendedMeeting
+        )
+        LOOP
+            INSERT INTO closeContactId
+            SELECT p.eid
+            FROM Participates p
+            WHERE p.room = _v_meeting.room
+                AND p.floor = _v_meeting.floor
+                AND p.date = _v_meeting.date
+                AND p.time = _v_meeting.time;
+        END LOOP;
+        RETURN QUERY SELECT * FROM closeContactId;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- # ADMIN #
+/*
+@AryanSarswat
+This method finds all employees that do not comply with the daily health declaration. 
+
+@param DATE _i_startDate Start date to check from.
+@param DATE _i_ endDate  Date to check till. 
+@return TABLE            Table of Employee ID and number of days they did not comply.
+*/
+CREATE OR REPLACE FUNCTION non_compliance
+    (IN _i_startDate DATE, IN _i_endDate DATE)
+RETURNS TABLE(employeeId INTEGER, numDays BIGINT) AS $$
+BEGIN
+    -- Get rid of multiple declaration per day
+    DROP TABLE IF EXISTS distinctDeclaration;
+    CREATE TEMP TABLE distinctDeclaration(date DATE, eid INTEGER);
+    
+    INSERT INTO distinctDeclaration
+        SELECT DISTINCT h.date, h.eid
+        FROM HealthDeclaration h;
+
+    -- Select employeeid's whose declaration are within the date range and have not made atleast one declaration a day
+    RETURN QUERY SELECT e.eid AS employeeId, ((_i_endDate - _i_startDate) - COUNT(h.eid) + 1) AS numDays
+                    FROM distinctDeclaration h RIGHT JOIN Employees e
+                    ON h.eid = e.eid
+                    WHERE ((h.date >= _i_startDate AND h.date <= _i_endDate) OR h.date IS NULL)
+                    GROUP BY e.eid
+                    HAVING COUNT(h.eid) <= (_i_endDate - _i_startDate);
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+/* ===== PROCEDURES ===== */
+
+-- # BASIC #
+/*
+@tanyjnaaman
+This procedure adds a department.
+
+@param INTEGER did       Department ID
+@param VARCHAR(50) dname Department name
+*/
 CREATE OR REPLACE PROCEDURE add_department
     (IN did INTEGER, IN dname VARCHAR(50))
 AS $$
@@ -232,8 +525,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+/*
+@tanyjnaaman
 
--- ### Removing a department ###
+This procedure removes a department. 
+@param INTEGER _i_did Department ID
+*/
 CREATE OR REPLACE PROCEDURE remove_department
     (IN _i_did INTEGER)
 AS $$
@@ -247,7 +544,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ### Adding a room ###
+/*
+@tanyjnaaman
+This procedure adds a new meeting room. 
+
+@param INTEGER _i_floor      New room floor
+@param INTEGER _i_room       New room number
+@param VARCHAR(50) _i_rname  New room name
+@param INTEGER _i_did        New room department ID
+@param INTEGER _i_capacity   New room capacity
+*/
 CREATE OR REPLACE PROCEDURE add_room
     (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_rname VARCHAR(50), 
     IN _i_did INTEGER, IN _i_capacity INTEGER)
@@ -260,7 +566,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ### Changing meeting room capacity ###
+/*
+@tanyjnaaman
+
+This method changes the capacity of a meeting room. It checks that the person changing is a manager of 
+that department.
+
+@param INTEGER _i_floor      Room floor
+@param INTEGER _i_room       Room number
+@param DATE date             Date of room change
+@param INTEGER               Employee ID of person doing the change
+*/
 CREATE OR REPLACE PROCEDURE change_capacity
     (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE, IN _i_eid INTEGER)
 AS $$
@@ -285,7 +601,20 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- ### Add employee ###
+/*
+@tanyjaaman
+
+This method adds an employee. 
+It handles the assignment of employee ID and generates a unique email for 
+each employee.
+
+@param VARCHAR(50) _i_ename         Employee name
+@param VARCHAR(50) _i_home_number   Employee home number
+@param VARCHAR(50) _i_mobile_number Employee mobile number
+@param VARCHAR(50) _i_office_number Employee office number
+@param VARCHAR(7) _i_etype          Employee type; can only be 'Manager', 'Senior' or 'Junior'
+@param INTEGER _i_did               Department id that employee will join
+*/
 CREATE OR REPLACE PROCEDURE add_employee
     (IN _i_ename VARCHAR(50), IN _i_home_number VARCHAR(50),
         IN _i_mobile_number VARCHAR(50), IN _i_office_number VARCHAR(50), 
@@ -307,7 +636,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- ### Remove employee (make resign) ###
+/*
+@tanyjnaaman
+This method sets the resignation of an employee.
+
+@param INTEGER _i_eid Employee id
+@param DATE _i_date   Date of resignation
+*/
 CREATE OR REPLACE PROCEDURE remove_employee
     (IN _i_eid INTEGER, IN _i_date DATE)
 AS $$
@@ -317,3 +652,38 @@ BEGIN
     WHERE eid = _i_eid;
 END;
 $$ LANGUAGE plpgsql;
+
+-- # HEALTH #
+/*
+@AryanSarswat
+This procedure is used for daily declaration of temperature. 
+Time is taken as an input so that morning and afternoon fever events are distinct.
+
+@param INTEGER _i_eid         Employee id
+@param DATE _i_date           Date of declaration
+@param NUMERIC _i_temperature Temperature declared
+@param TIME _i_ time          Time of declaration
+*/
+CREATE OR REPLACE PROCEDURE declare_health
+    (IN _i_eid INTEGER, IN _i_date DATE, IN _i_temperature NUMERIC, IN _i_time TIME)
+AS $$
+BEGIN
+    INSERT INTO HealthDeclaration
+        VALUES (
+        _i_date,
+        _i_time,
+        _i_eid,
+        _i_temperature
+    );
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+
+
