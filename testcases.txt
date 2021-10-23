@@ -1,0 +1,32 @@
+CORE
+2.
+book a room 
+invalid floor, room, date, start, end
+non-existent room
+non-existent eid
+end - start > 2
+employee is not bookable
+
+3.
+invalid floor, room, date, start, end
+non-existent room
+non-existent eid
+end - start > 2
+remove approved room
+
+4.
+join a valid meeting
+invalid floor, room, date, start, end
+non-existent room
+non-existent eid
+non-existent meeting
+meeting is approved
+employee has a fever
+employee is no longer employed
+
+5.
+success
+invalid floor, room, date, start, end
+non-existent meeting
+meeting is approved
+booker tries to leave
