@@ -65,7 +65,7 @@ CREATE TABLE Participates (
     floor INTEGER,
     date DATE,
     time TIME,
-    CONSTRAINT _c_noShadowClones CHECK UNIQUE((eid, date, time)),
+    CONSTRAINT _c_noShadowClones CHECK UNIQUE(eid, date, time),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
