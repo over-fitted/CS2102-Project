@@ -1,6 +1,7 @@
 /* ===== TRIGGERS ===== */
 
 /*
+@tanyjnaaman
 This trigger ensures that if an employee resigns, his future bookings are removed.
 It also ensures that an update to the resigned field is done exactly once.
 */
@@ -43,7 +44,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
 
 /*
 @tanyjnaaman
-This trigger ensures thatupon a room capacity change, all future bookings that violate it
+This trigger ensures that upon a room capacity change, all future bookings that violate it
 are removed.
 */
 CREATE OR REPLACE FUNCTION _tf_removeViolatingBookings()
@@ -247,7 +248,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
 
 -- # HELPER #
 /*
-@tanyjnaaman
+@arijitnoobstar
 This is a helper function to check if a time that is keyed in is an exact hour.
 
 IN:
