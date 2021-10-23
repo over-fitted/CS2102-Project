@@ -25,9 +25,9 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    home_number VARCHAR(50) UNIQUE,
-    mobile_number VARCHAR(50) UNIQUE,
-    office_number VARCHAR(50) UNIQUE,
+    home_number VARCHAR(50), -- can stay in same house
+    mobile_number VARCHAR(50) UNIQUE, -- need to contact
+    office_number VARCHAR(50), -- can share office number 
     
     CONSTRAINT _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
     FOREIGN KEY (did) REFERENCES Departments(did)
@@ -36,10 +36,11 @@ CREATE TABLE Employees (
 --TRIGGER: Fever event
 CREATE TABLE HealthDeclaration (
     date DATE,
+    time TIME,
     eid INTEGER NOT NULL,
-    temperature INTEGER NOT NULL CHECK (temperature > 34 AND temperature < 43),
+    temperature INTEGER NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
-    PRIMARY KEY (date, eid)
+    PRIMARY KEY (date, time, eid)
 );
 
 --TRIGGER: must have at least one participant, let it be booker
@@ -59,12 +60,12 @@ CREATE TABLE Bookings (
 --TRIGGER: Check capacity
 --TRIGGER: When create a booking, insert booker into
 CREATE TABLE Participates (
-    eid INTEGER UNIQUE,
+    eid INTEGER ,
     room INTEGER,
     floor INTEGER,
-    date DATE UNIQUE,
-    time TIME UNIQUE,
+    date DATE,
+    time TIME,
+    CONSTRAINT _c_noShadowClones CHECK UNIQUE((eid, date, time)),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
-
