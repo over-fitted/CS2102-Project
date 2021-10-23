@@ -1,8 +1,8 @@
-DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, Contact, HealthDeclaration, Bookings, Participates CASCADE;
+DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, HealthDeclaration, Bookings, Participates CASCADE;
 
 CREATE TABLE Departments (
     did INTEGER PRIMARY KEY,
-    dname TEXT NOT NULL
+    dname VARCHAR(50) NOT NULL
 );
 
 --TRIGGER: change meetings that violate upon capacity change from the day after
@@ -12,8 +12,9 @@ CREATE TABLE MeetingRooms (
     room INTEGER CHECK (room > 0),
     rname VARCHAR(50) NOT NULL,
     did INTEGER NOT NULL,
+    date DATE NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
-    FOREIGN KEY (did) REFERENCES Departments(did),
+    FOREIGN KEY (did) REFERENCES Departments(did) ON DELETE CASCADE,
     PRIMARY KEY (floor, room)
 );
 
@@ -24,16 +25,12 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    -- Bookable derived attribute checking ISA Manger, Senior
+    home_number VARCHAR(50), -- can stay in same house
+    mobile_number VARCHAR(50) UNIQUE, -- need to contact
+    office_number VARCHAR(50), -- can share office number 
+    
+    CONSTRAINT _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
     FOREIGN KEY (did) REFERENCES Departments(did)
-);
-
---TODO: Check format of contact number
---TRIGGER: employees must have contact
-CREATE TABLE Contact (
-    eid INTEGER PRIMARY KEY,
-    phone VARCHAR(50),
-    FOREIGN KEY (eid) REFERENCES Employees(eid) -- intentional no cascade to check for bad eid modification
 );
 
 --TRIGGER: Fever event
@@ -41,7 +38,7 @@ CREATE TABLE HealthDeclaration (
     date DATE,
     time TIME,
     eid INTEGER NOT NULL,
-    temperature NUMERIC NOT NULL CHECK (temperature > 30),
+    temperature NUMERIC NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
     PRIMARY KEY (date, time, eid)
 );
@@ -56,18 +53,19 @@ CREATE TABLE Bookings (
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
     FOREIGN KEY (approver_id) REFERENCES Employees (eid),
-    FOREIGN KEY (room, floor) REFERENCES MeetingRooms(room, floor),
+    FOREIGN KEY (room, floor) REFERENCES MeetingRooms(room, floor) ON DELETE CASCADE,
     PRIMARY KEY (room, floor, date, time)
 );
 
 --TRIGGER: Check capacity
 --TRIGGER: When create a booking, insert booker into
 CREATE TABLE Participates (
-    eid INTEGER,
+    eid INTEGER ,
     room INTEGER,
     floor INTEGER,
     date DATE,
     time TIME,
+    CONSTRAINT _c_noShadowClones CHECK UNIQUE((eid, date, time)),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
