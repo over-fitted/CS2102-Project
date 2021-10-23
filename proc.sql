@@ -243,6 +243,9 @@ BEGIN
     ELSE
         RAISE NOTICE 'Booking at floor %, room % on % at % has been approved, no more participants can join',NEW.floor, NEW.room, NEW.date, NEW.time;
         RETURN NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS _t_approvalCheckToJoin ON Participates;
 CREATE TRIGGER _t_approvalCheckToJoin
@@ -325,9 +328,8 @@ BEGIN
         -- CASCADE should delete all eids in participates
     END LOOP;
 END;
+$$ LANGUAGE plpgsql;
 /* # TRIGGERS & TRIGGER FUNCTIONS # */
-
-
 
 /* ## Enforcing data integrity ## */
 /* Note: All triggers here are initially deferred. ## */
