@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION view_booking_report(IN startDate DATE, IN eid INT)
-RETURNS TABLE(floor INT, room INT, date DATE, startTime TIMESTAMP, isApproved BOOLEAN)
+RETURNS TABLE(floor INT, room INT, date DATE, startTime TIME, isApproved BOOLEAN)
 AS $$    
 BEGIN
     return QUERY SELECT b.floor, b.room, b.date, b.time, b.approver_id IS NOT NULL approved
@@ -11,7 +11,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION view_future_meeting(IN startDate DATE, IN employee_id INT)
-RETURNS TABLE(floor INT, room INT, date DATE, startTime TIMESTAMP, eid INT)
+RETURNS TABLE(floor INT, room INT, date DATE, startTime TIME, eid INT)
 AS $$    
 BEGIN
     return QUERY SELECT p.floor, p.room, p.date, p.time, p.eid
@@ -22,7 +22,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION view_manager_report(IN startDate DATE, IN employee_id INT)
-RETURNS TABLE(floor INT, room INT, date DATE, startTime TIMESTAMP, eid INT)
+RETURNS TABLE(floor INT, room INT, date DATE, startTime TIME, eid INT)
 AS $$
 DECLARE managed_did INT;
 BEGIN
