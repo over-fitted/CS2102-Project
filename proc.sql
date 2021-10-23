@@ -1,6 +1,6 @@
 /*
 This SQL file contains all the processes of the database: Triggers, Functions & Procedures
-PostgreSQL Version: 14.0 (Released 30th Septemver 2021)
+PostgreSQL Version: 14.0 (Released 30th September 2021)
 Authors: @tanyjnaaman, @AryanSarswat, @arijitnoobstar, @over-fitted
 */
 
