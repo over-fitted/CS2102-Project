@@ -159,51 +159,69 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
 
 /* # FUNCTIONS # */
 
--- ## Core ##
+-- ## Helper ## 
+-- function to check if a time variable is exactly on the hour
+CREATE OR REPLACE FUNCTION _f_bookingOnTheHour(IN _i_time TIME)
+RETURNS BOOLEAN AS $$
+BEGIN
+    IF(EXTRACT(MINUTE FROM _i_time) = 0 AND EXTRACT(SECOND FROM _i_time) = 0 AND EXTRACT(milliseconds FROM _i_time) = 0)
+    THEN
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
--- ### Search for available rooms
+-- ## Core ##
+CREATE OR REPLACE FUNCTION search_room
+    (IN _i_booking_capacity INTEGER, 
+        IN _i_date DATE, 
+        IN _i_time_start TIME,
+        IN _i_time_end TIME,
+        OUT _o_floor INTEGER,
+        OUT _o_room INTEGER,
+        OUT _o_did INTEGER,
+        OUT _o_capacity INTEGER)
+RETURNS SETOF RECORD AS $$
+DECLARE
+    _v_validHour BOOLEAN;
+BEGIN
+    /*
+    Idea: find all meeting rooms not in 
+    bookings at the given time that have a valid
+    capacity. But only if in time and out times are on the hour.
+    */
+    _v_validHour := _f_bookingOnTheHour(_i_time_start) AND _f_bookingOnTheHour(_i_time_end);
+    IF (_v_validHour) THEN
+        RETURN QUERY (
+            SELECT floor as floor, room as room, did as did, capacity as capacity
+            FROM MeetingRooms m
+            WHERE NOT EXISTS (
+                SELECT 
+                FROM Bookings b
+                WHERE m.room = b.room
+                    AND m.floor = b.floor
+                    AND b.time >= _i_time_start
+                    AND b.time < _i_time_end
+            ) AND _i_capacity <= capacity
+        );
+    ELSE 
+        RAISE NOTICE 'Start and end hours should be exact hours!';
+        RETURN QUERY (
+            SELECT *
+            FROM MeetingRooms
+            WHERE 1 = 0
+        );
+
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 
 
 /* # PROCEDURES # */
 -- ## Basic ## 
-CREATE OR REPLACE FUNCTION search_room
-    (IN booking_capacity INTEGER, 
-        IN date DATE, 
-        IN time_start TIME,
-        IN time_end TIME,
-        OUT floor INTEGER,
-        OUT room INTEGER,
-        OUT did INTEGER,
-        OUT capacity INTEGER)
-RETURNS SETOF RECORD AS $$
-BEGIN
-    /*
-    Idea: find all meeting rooms not in 
-    bookings at the given time that have a valid
-    capacity.
-    */
-    WITH possibleMeetingRooms AS (
-        SELECT DISTINCT m.floor, m.room, m.did, m.capacity
-        FROM MeetingRooms m
-        WHERE m.capacity <= booking_capacity
-    ), bookedRooms AS (
-        SELECT DISTINCT b.floor, b.room, mb.did, mb.capacity
-        FROM Bookings b, MeetingRooms mb
-        WHERE b.time >= time_start
-            AND DATEADD(HOUR, 1, b.time) < time_end
-            AND b.room = mb.room
-            AND b.floor = mb.floor
-    ), target AS (
-        SELECT * FROM possibleMeetingRooms
-        EXCEPT
-        SELECT * FROM bookedRooms
-    )
-    SELECT floor, room, did, capacity
-    FROM target;
-END;
-$$ LANGUAGE plpgsql;
-
 -- ### Adding a department ###
 CREATE OR REPLACE PROCEDURE add_department
     (IN did INTEGER, IN dname VARCHAR(50))
@@ -280,14 +298,11 @@ BEGIN
     SELECT COUNT(DISTINCT eid) + 1 INTO _v_eid
     FROM Employees;
 
-    SELECT CONCAT(CAST(eid AS VARCHAR(50)), '@office.com') INTO _v_email;
+    SELECT CONCAT(CAST(_v_eid AS VARCHAR(50)), '@office.com') INTO _v_email;
 
     INSERT INTO Employees
     VALUES(_v_eid, _i_ename, _v_email, _i_etype, _i_did, 
         NULL, _i_home_number, _i_mobile_number, _i_office_number);
-
-    INSERT INTO Contact
-    VALUES(_v_eid, _i_phone);
 END;
 $$ LANGUAGE plpgsql;
 
