@@ -1,5 +1,4 @@
---TODO does constraints check for not null as well by default
-DROP TABLE IF EXISTS Departments, Meeting_Rooms, Employees, Contact, Health_Declaration, Bookings, Participates CASCADE;
+DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, Contact, HealthDeclaration, Bookings, Participates CASCADE;
 
 CREATE TABLE Departments (
     did INTEGER PRIMARY KEY,
@@ -8,7 +7,7 @@ CREATE TABLE Departments (
 
 --TRIGGER: change meetings that violate upon capacity change from the day after
 --Intentionally ignore past capacities and change dates
-CREATE TABLE Meeting_Rooms (
+CREATE TABLE MeetingRooms (
     floor INTEGER CHECK (floor > 0),
     room INTEGER CHECK (room > 0),
     rname VARCHAR(50) NOT NULL,
@@ -25,7 +24,7 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    -- Bookable derived attribute checking isa Manger, Senior
+    -- Bookable derived attribute checking ISA Manger, Senior
     FOREIGN KEY (did) REFERENCES Departments(did)
 );
 
@@ -38,7 +37,7 @@ CREATE TABLE Contact (
 );
 
 --TRIGGER: Fever event
-CREATE TABLE Health_Declaration (
+CREATE TABLE HealthDeclaration (
     date DATE,
     eid INTEGER NOT NULL,
     temperature INTEGER NOT NULL CHECK (temperature > 30),
@@ -46,17 +45,17 @@ CREATE TABLE Health_Declaration (
     PRIMARY KEY (date, eid)
 );
 
---TRIGGER: must have at least one joins participant
+--TRIGGER: must have at least one participant, let it be booker
 CREATE TABLE Bookings (
     room INTEGER,
     floor INTEGER,
     date DATE,
     time TIMESTAMP,
-    booker_id INTEGER NOT NULL, --booker
+    booker_id INTEGER NOT NULL, 
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
     FOREIGN KEY (approver_id) REFERENCES Employees (eid),
-    FOREIGN KEY (room, floor) REFERENCES Meeting_Rooms(room, floor),
+    FOREIGN KEY (room, floor) REFERENCES MeetingRooms(room, floor),
     PRIMARY KEY (room, floor, date, time)
 );
 
