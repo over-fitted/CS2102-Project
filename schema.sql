@@ -38,7 +38,7 @@ CREATE TABLE HealthDeclaration (
     date DATE,
     time TIME,
     eid INTEGER NOT NULL,
-    temperature INTEGER NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
+    temperature NUMERIC NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
     PRIMARY KEY (date, time, eid)
 );
@@ -65,7 +65,7 @@ CREATE TABLE Participates (
     floor INTEGER,
     date DATE,
     time TIME,
-    CONSTRAINT _c_noShadowClones CHECK UNIQUE((eid, date, time)),
+    CONSTRAINT _c_noShadowClones UNIQUE(eid, date, time),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
 );
