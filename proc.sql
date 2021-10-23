@@ -11,8 +11,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS _t_bookingByBooker ON Bookings;
-CREATE TRIGGER _t_bookingByBooker
+CREATE OR REPLACE TRIGGER _t_bookingByBooker
 BEFORE INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingByBooker();
 
@@ -21,11 +20,11 @@ CREATE OR REPLACE FUNCTION _tf_bookingNotApproved()
 RETURNS TRIGGER AS $$
 
 DECLARE
-    apporver INTEGER;
+    approver INTEGER;
 
 BEGIN
     -- ### Checking if manager has approved
-    SELECT b.approver_id INTO apporver
+    SELECT b.approver_id INTO approver
     FROM Bookings b
     WHERE b.floor = NEW.floor
         AND b.room = NEW.room
@@ -33,7 +32,7 @@ BEGIN
         AND b.time = NEW.time
         AND b.booker_id = NEW.booker_id;
     
-    IF (apporver IS NULL) THEN
+    IF (approver IS NULL) THEN
         RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
         RETURN NULL;
     ELSE
@@ -109,8 +108,7 @@ CREATE OR REPLACE TRIGGER _t_fever_event
 AFTER INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
 
-DROP TRIGGER IF EXISTS _t_feverCannotBook ON Bookings;
-CREATE TRIGGER _t_feverCannotBook
+CREATE OR REPLACE TRIGGER _t_feverCannotBook
 BEFORE INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotMeet();
 
@@ -200,8 +198,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- use the same trigger function _tf_feverCannotMeet for the trigger _t_feverCannotJoin
-DROP TRIGGER IF EXISTS _t_feverCannotJoin ON Participates;
-CREATE TRIGGER _t_feverCannotJoin
+CREATE OR REPLACE TRIGGER _t_feverCannotJoin
 BEFORE INSERT ON Participates -- to prefer employees with fever from joining
 FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotMeet();
 
@@ -224,8 +221,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS _t_checkBookingExists ON Participates;
-CREATE TRIGGER _t_checkBookingExists
+CREATE OR REPLACE TRIGGER _t_checkBookingExists
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_checkBookingExists();
 
@@ -247,8 +243,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS _t_approvalCheckToJoin ON Participates;
-CREATE TRIGGER _t_approvalCheckToJoin
+CREATE OR REPLACE TRIGGER _t_approvalCheckToJoin
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToJoin();
 
@@ -295,8 +290,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS _t_approvalCheckToLeave ON Participates;
-CREATE TRIGGER _t_approvalCheckToLeave
+CREATE OR REPLACE TRIGGER _t_approvalCheckToLeave
 BEFORE DELETE ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToLeave();
 
@@ -427,8 +421,6 @@ BEGIN
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
-
-DROP FUNCTION IF EXISTS _f_non_compliance(date,date);
 
 -- ### Returns employee_id and number of times they default on declaring temperature
 CREATE OR REPLACE FUNCTION _f_non_compliance
