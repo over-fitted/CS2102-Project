@@ -38,7 +38,7 @@ CREATE TABLE HealthDeclaration (
     date DATE,
     time TIME,
     eid INTEGER NOT NULL,
-    temperature INTEGER NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
+    temperature NUMERIC NOT NULL CONSTRAINT _c_validTemperature CHECK (temperature >= 34 AND temperature <= 43),
     FOREIGN KEY (eid) REFERENCES Employees(eid),  -- intentional no cascade to check for bad eid modification
     PRIMARY KEY (date, time, eid)
 );
