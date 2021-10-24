@@ -524,7 +524,7 @@ defined time period and given an expected booking capacity needed.
 @param TIME _i_time_start          Desired start time
 @param TIME _i_time_end            Desired end time
 
-@return TABLE 
+@return TABLE(_o_floor INTEGER, _o_room INTEGER, _o_did INTEGER, _o_capacity INTEGER)
 */
 CREATE OR REPLACE FUNCTION search_room
     (IN _i_booking_capacity INTEGER, 
@@ -552,7 +552,7 @@ BEGIN
                     AND m.floor = b.floor
                     AND b.time >= _i_time_start
                     AND b.time < _i_time_end
-            ) AND _i_capacity <= capacity
+            ) AND _i_booking_capacity <= capacity
         );
     ELSE 
         RAISE NOTICE 'Start and end hours should be exact hours!';
