@@ -12,8 +12,8 @@ Expected behavior: room is booked with no issue
 -> One hour slot
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
+\i 'schema.sql'
+\i 'proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');

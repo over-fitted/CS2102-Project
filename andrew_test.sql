@@ -1,3 +1,6 @@
+\i 'schema.sql'
+\i 'proc.sql'
+
 -- TEST ADMIN 2 view_booking_report --
 /* 
 TEST CASES:
