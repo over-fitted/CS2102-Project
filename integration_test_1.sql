@@ -4,13 +4,11 @@
 -- Create + approve booking --
 /* Cases:
 1) search_room
-2) book_room
-3) unbook_room
-4) join_meeting
-5) approve_meeting
-6) view_booking_report
-7) view_future_meeting
-8) view_manager_report
+2) unbook_room
+3) join_meeting
+4) view_booking_report
+5) view_future_meeting
+6) view_manager_report
 */
 
 -- TEST Booking + search_room
