@@ -29,7 +29,7 @@ BEGIN;
 	CALL book_room(2, 2, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 2 ##
@@ -38,9 +38,6 @@ COMMIT;
 -> Same time, day and diff location
 -> Multiple hour slot
 */
-
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -56,7 +53,7 @@ BEGIN;
 	CALL book_room(2, 2, '2017-04-05'::DATE, '12:00:00'::TIME, '17:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 3 ##
 /*
@@ -65,8 +62,6 @@ COMMIT;
 -> Multiple hour slot
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -82,15 +77,13 @@ BEGIN;
 	CALL book_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '17:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 4 ##
 /*
 -> Bookings by a Junior
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -103,7 +96,7 @@ BEGIN;
 	CALL book_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 3);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 5 ##
@@ -112,8 +105,6 @@ COMMIT;
 -> Not booked on the hour
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -126,7 +117,7 @@ BEGIN;
 	CALL book_room(1, 1, '2017-04-05'::DATE, '12:32:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 6 ##
 /*
@@ -134,8 +125,6 @@ COMMIT;
 -> The senior has fever
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -149,7 +138,7 @@ BEGIN;
 	CALL book_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 7 ##
 /*
@@ -157,8 +146,6 @@ COMMIT;
 -> floor and room does not exist
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -171,7 +158,7 @@ BEGIN;
 	CALL book_room(34, 65, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 8 ##
 /*
@@ -179,8 +166,6 @@ COMMIT;
 -> BOT THE SENIOR HAS RESIGNED***************
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -193,7 +178,7 @@ BEGIN;
 	CALL book_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 
 /* ~~~~~~ unbook_room --> CORE 3 # 
@@ -207,8 +192,6 @@ Expected behavior: room is unbooked with no issue
 -> Manager unbooks his booking
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -227,7 +210,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 2 ##
@@ -238,8 +221,6 @@ COMMIT;
 --> unbooked meeting DOES NOT EXIST (wrong year)
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -255,7 +236,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2019-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 3 ##
 /*
@@ -264,8 +245,6 @@ COMMIT;
 --> unbooked meeting DOES NOT EXIST (Start time is too early)
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -281,7 +260,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '11:00:00'::TIME, '15:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 4 ##
 /*
@@ -290,8 +269,6 @@ COMMIT;
 --> unbooks middle portion of a long meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -307,7 +284,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '14:00:00'::TIME, '16:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 5 ##
 /*
@@ -317,8 +294,6 @@ COMMIT;
 --> unbooks middle portion of a long meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -336,7 +311,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '14:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 6 ##
 /*
@@ -345,8 +320,6 @@ COMMIT;
 -> Senior tries unbooks the Manager's booking (no sabotage rule)
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -364,7 +337,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 	SELECT * FROM Bookings;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 7 ##
 /*
@@ -373,8 +346,6 @@ COMMIT;
 -> Manager unbooks meeting (show that it CASCADES to Participates)
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -396,7 +367,7 @@ BEGIN;
 	CALL unbook_room(1, 1, '2017-04-05'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 1);
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
-COMMIT;
+ROLLBACK;
 
 
 /* ~~~~~~ join_meeting --> CORE 4 # 
@@ -409,8 +380,6 @@ Expected behavior: participant joins booking with no issue
 -> Senior and Junior joins the meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -428,7 +397,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 2 ##
 /*
@@ -437,8 +406,6 @@ COMMIT;
 But Junior joins at the wrong time
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -456,7 +423,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 3 ##
@@ -466,8 +433,6 @@ COMMIT;
 But Junior has a fever
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -488,7 +453,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 4 ##
 /*
@@ -497,8 +462,6 @@ COMMIT;
 But Junior still tries to join it
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -520,7 +483,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 5 ##
 /*
@@ -529,8 +492,6 @@ COMMIT;
 Junior is resigned but tries to join
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -552,7 +513,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 6 ##
 /*
@@ -562,8 +523,6 @@ COMMIT;
 -> Senior and Junior attend at different start and end times
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -581,7 +540,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 
 /* ~~~~~~ leave_meeting --> CORE 5 # 
@@ -595,8 +554,6 @@ Expected behavior: participant joins booking with no issue
 -> Senior leaves the meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -618,7 +575,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 2 ##
@@ -628,8 +585,6 @@ COMMIT;
 -> Senior leaves the WRONG**** meeting (wrong year)
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -651,7 +606,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 3 ##
 /*
@@ -661,8 +616,6 @@ COMMIT;
 -> But Senior tried to leave the meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -685,7 +638,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 
 -- ## Test 4 ##
@@ -696,8 +649,6 @@ COMMIT;
 -> Junior and Senior leave at different times
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -720,7 +671,7 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
 
 -- ## Test 5 ##
 /*
@@ -729,8 +680,6 @@ COMMIT;
 -> Manager leaves the meeting
 */
 
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/schema.sql'
-\i 'C:/Users/DJ Myylo/Desktop/NUS_Y4S1/CS2102/proc.sql'
 BEGIN;
 	-- initialise data
 	INSERT INTO Departments VALUES(1, 'accounting');
@@ -752,4 +701,4 @@ BEGIN;
 	SELECT * FROM Bookings;
 	SELECT * FROM Participates;
 
-COMMIT;
+ROLLBACK;
