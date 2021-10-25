@@ -44,7 +44,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_removeResignedBookings
+CREATE TRIGGER _t_removeResignedBookings
 AFTER UPDATE ON Employees
 FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
 
@@ -95,7 +95,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_removeViolatingBookings
+CREATE TRIGGER _t_removeViolatingBookings
 AFTER UPDATE ON MeetingRooms
 FOR EACH ROW EXECUTE FUNCTION _tf_removeViolatingBookings();
 
@@ -176,7 +176,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;        
 
-CREATE OR REPLACE TRIGGER _t_fever_event
+CREATE TRIGGER _t_fever_event
 AFTER INSERT ON HealthDeclaration
 FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
 
@@ -212,7 +212,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_bookingInsertBooker
+CREATE TRIGGER _t_bookingInsertBooker
 AFTER INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
 
@@ -246,7 +246,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_bookingWithinCapacity
+CREATE TRIGGER _t_bookingWithinCapacity
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
 
@@ -273,7 +273,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_bookingByBooker
+CREATE TRIGGER _t_bookingByBooker
 BEFORE INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingByBooker();
 
@@ -303,7 +303,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_feverCannotBook
+CREATE TRIGGER _t_feverCannotBook
 BEFORE INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotBook();
 
@@ -328,7 +328,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_resignedCannotBook
+CREATE TRIGGER _t_resignedCannotBook
 BEFORE INSERT ON Bookings
 FOR EACH ROW EXECUTE FUNCTION _tf_resignedCannotBook();
 
@@ -354,7 +354,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_checkBookingExists
+CREATE TRIGGER _t_checkBookingExists
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_checkBookingExists();
 
@@ -379,7 +379,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_approvalCheckToJoin
+CREATE TRIGGER _t_approvalCheckToJoin
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToJoin();
 
@@ -409,7 +409,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_feverCannotJoin
+CREATE TRIGGER _t_feverCannotJoin
 BEFORE INSERT ON Participates 
 FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotJoin();
 
@@ -434,7 +434,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_resignedCannotJoin
+CREATE TRIGGER _t_resignedCannotJoin
 BEFORE INSERT ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_resignedCannotJoin();
 
@@ -459,7 +459,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_approvalCheckToLeave
+CREATE TRIGGER _t_approvalCheckToLeave
 BEFORE DELETE ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToLeave();
 
@@ -483,7 +483,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE TRIGGER _t_bookerLeavesMeetingCancelled
+CREATE TRIGGER _t_bookerLeavesMeetingCancelled
 AFTER DELETE ON Participates
 FOR EACH ROW EXECUTE FUNCTION _tf_bookerLeavesMeetingCancelled();
 
