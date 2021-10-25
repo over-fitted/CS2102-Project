@@ -31,7 +31,7 @@ INSERT INTO Bookings VALUES (1, 1, '2021-10-30', '13:00:00', 1, 1);
 SELECT * FROM view_booking_report('2021-10-22', 1);
 ROLLBACK;
 
--- TEST ADMIN 3 
+-- TEST AD
 /*
 TEST CASES:
 1) sorted by date and time correctly (3 out of order inserted)
