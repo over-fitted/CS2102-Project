@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, HealthDeclaration, Bookings, Participates, Temp_Contact_Tracing CASCADE;
+DROP TABLE IF EXISTS Departments, MeetingRooms, Employees, HealthDeclaration, Bookings, Participates CASCADE;
 
 CREATE TABLE Departments (
     did INTEGER PRIMARY KEY,
@@ -68,9 +68,4 @@ CREATE TABLE Participates (
     CONSTRAINT _c_noShadowClones UNIQUE(eid, date, time),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
-);
-
-CREATE TABLE Temp_Contact_Tracing (
-    eid INTEGER PRIMARY KEY, 
-    FOREIGN KEY(eid) REFERENCES Employees (eid) 
 );
