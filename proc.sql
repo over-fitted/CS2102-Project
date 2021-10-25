@@ -687,7 +687,7 @@ AS $$
 BEGIN
     return QUERY SELECT b.floor, b.room, b.date, b.time, b.approver_id IS NOT NULL approved
     FROM Bookings b
-    WHERE b.booker_id = _i_.eid
+    WHERE b.booker_id = _i_eid
     AND b.date >= _i_startDate
     ORDER BY b.date ASC, b.time ASC;
 END;
@@ -732,7 +732,7 @@ RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid
 AS $$
 DECLARE managed_did INT;
 BEGIN
-    IF (SELECT e.etype <> 'Manager' FROM Employees e WHERE e.eid = employee_id) 
+    IF (SELECT e.etype <> 'Manager' FROM Employees e WHERE e.eid = _i_eid) 
     THEN RETURN;
     END IF;    
     SELECT e.did INTO managed_did
