@@ -671,7 +671,86 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+/*
+@andrew
+This function finds all bookings made by a specified employee starting from a specified
+date inclusive.
 
+@param DATE _i_startDate              Date from which to query for bookings
+@param INT _i_eid                     Employee id
+
+@return TABLE(floor INT, room INT, date DATE, startTime TIME, isApproved BOOLEAN)
+*/
+CREATE OR REPLACE FUNCTION view_booking_report(IN _i_startDate DATE, IN _i_eid INT)
+RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_isApproved BOOLEAN)
+AS $$    
+BEGIN
+    return QUERY SELECT b.floor, b.room, b.date, b.time, b.approver_id IS NOT NULL approved
+    FROM Bookings b
+    WHERE b.booker_id = _i_.eid
+    AND b.date >= _i_startDate
+    ORDER BY b.date ASC, b.time ASC;
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+@andrew
+This function finds approved bookings that a specified employee is scheduled to attend,
+starting from a specified date.
+
+@param DATE _i_startDate              Date from which to query for bookings
+@param INT _i_eid                     Employee id
+
+@return TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
+*/
+CREATE OR REPLACE FUNCTION view_future_meeting(IN _i_startDate DATE, IN _i_eid INT)
+RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
+AS $$    
+BEGIN
+    return QUERY SELECT p.floor, p.room, p.date, p.time, p.eid
+    FROM Participates p NATURAL JOIN Bookings b
+    WHERE b.approver_id IS NOT NULL
+    AND p.eid = _i_eid
+    AND p.date >= _i_startDate
+    ORDER BY b.date ASC, b.time ASC;
+END;
+$$ LANGUAGE plpgsql;
+
+/*
+@andrew
+This function finds non-approved bookings made by employees from department that specified 
+employee manages, starting from specified startDate. If specified employee does not manage
+any department, the returned table will be empty.
+
+@param DATE _i_startDate            Date from which to query for bookings
+@param INT _i_eid                   Employee id
+
+@return TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
+*/
+CREATE OR REPLACE FUNCTION view_manager_report(IN _i_startDate DATE, IN _i_eid INT)
+RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
+AS $$
+DECLARE managed_did INT;
+BEGIN
+    IF (SELECT e.etype <> 'Manager' FROM Employees e WHERE e.eid = employee_id) 
+    THEN RETURN;
+    END IF;    
+    SELECT e.did INTO managed_did
+    FROM Employees e
+    WHERE e.eid = _i_eid;
+
+    RETURN QUERY SELECT b.floor, b.room, b.date, b.time, b.booker_id
+    FROM Bookings b
+    WHERE b.booker_id IN (
+        SELECT e.eid
+        FROM Employees e
+        WHERE e.did = managed_did
+    )
+    AND b.approver_id IS NULL
+    AND b.date >= _i_startDate
+    ORDER BY b.date ASC, b.time asc;
+END;
+$$ LANGUAGE plpgsql;
 
 /* ===== PROCEDURES ===== */
 
