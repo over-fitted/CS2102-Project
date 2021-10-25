@@ -184,37 +184,37 @@ FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
 @tanyjnaaman
 This trigger ensures that a person who booked a meeting will participate in it.
 */
-CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
-RETURNS TRIGGER AS $$
-BEGIN 
-    RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
-        NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
-    -- see if new row is already in participates
-    IF NOT EXISTS (
-        SELECT 1
-        FROM Participates p
-        WHERE p.eid = NEW.booker_id
-            AND p.room = NEW.room
-            AND p.floor = NEW.floor
-            AND p.date = NEW.date 
-            AND p.time = NEW.time
-    ) THEN
-        INSERT INTO Participates 
-        VALUES (
-            NEW.booker_id,
-            NEW.room,
-            NEW.floor,
-            NEW.date,
-            NEW.time
-        );
-    END IF;
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
+-- CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
+-- RETURNS TRIGGER AS $$
+-- BEGIN 
+--     RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
+--         NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
+--     -- see if new row is already in participates
+--     IF NOT EXISTS (
+--         SELECT 1
+--         FROM Participates p
+--         WHERE p.eid = NEW.booker_id
+--             AND p.room = NEW.room
+--             AND p.floor = NEW.floor
+--             AND p.date = NEW.date 
+--             AND p.time = NEW.time
+--     ) THEN
+--         INSERT INTO Participates 
+--         VALUES (
+--             NEW.booker_id,
+--             NEW.room,
+--             NEW.floor,
+--             NEW.date,
+--             NEW.time
+--         );
+--     END IF;
+--     RETURN NULL;
+-- END;
+-- $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER _t_bookingInsertBooker
-AFTER INSERT ON Bookings
-FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
+-- CREATE TRIGGER _t_bookingInsertBooker
+-- AFTER INSERT ON Bookings
+-- FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
 
 
 /*
@@ -1105,7 +1105,7 @@ BEGIN
     <<MainLoop>>
     LOOP
         --All the bookings have been approved then exit
-        EXIT WHEN _v_tempStartHour > _i_endHour;
+        EXIT WHEN _v_tempStartHour >= _i_endHour;
         
         -- Checks whether employee's department is the same as the manager's department
         SELECT e.did INTO _v_managerDept
