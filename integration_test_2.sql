@@ -152,7 +152,7 @@ ROLLBACK;
  eid | room | floor |    date    |   time
 -----+------+-------+------------+----------
    1 |    1 |     1 | 2021-01-01 | 00:00:00
-   6 |    1 |     1 | 2021-01-01 | 00:00:00
+   2 |    1 |     1 | 2021-01-01 | 00:00:00
    7 |    5 |     5 | 2021-01-04 | 00:00:00
    7 |    6 |     6 | 2021-01-02 | 00:00:00
    8 |    6 |     6 | 2021-01-02 | 00:00:00
@@ -197,7 +197,7 @@ CALL add_employee('Non_Fever_3', NULL, NULL, '47534732', 'Senior', 0); -- Employ
 CALL book_room(1, 1,'2021-01-01', '00:00:00', '01:00:00', 1);
 CALL join_meeting(1, 1,'2021-01-01', '00:00:00', '01:00:00', 2);
 
---Employee 6 is a participant in a future meeting, but is not the booker : removed from Booking
+--Employee 2 is a participant in a future meeting, but is not the booker : removed from Booking
 CALL book_room(5, 5,'2021-01-04', '00:00:00', '01:00:00', 7);
 CALL join_meeting(5, 5,'2021-01-04', '00:00:00', '01:00:00', 2);
 

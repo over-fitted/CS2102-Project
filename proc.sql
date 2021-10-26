@@ -150,7 +150,13 @@ BEGIN
     IF (NEW.temperature > 37.5) THEN
         RAISE NOTICE 'TRIGGER: Employee % has fever', NEW.eid;
 
-        FOR _v_tempEmployee IN (SELECT * FROM _f_contact_tracing(NEW.eid))
+        FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
+        LOOP
+            INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
+        END LOOP;
+
+
+        FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
         LOOP
             RAISE NOTICE'Close contact employees : %', _v_tempEmployee;
             -- ### Delete booking all made by close contact employee in the next 7 days
@@ -172,6 +178,9 @@ BEGIN
             WHERE p.eid = NEW.eid
                 AND (p.date > NEW.date OR (p.date = NEW.date AND p.time > NEW.time));
     END IF;
+
+    DELETE FROM Temp_Contact_Tracing;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;        
@@ -449,7 +458,7 @@ BEGIN
         WHERE b.room = OLD.room
         AND b.floor = OLD.floor
         AND b.date = OLD.date
-        AND b.time = OLD.time) IS NULL)
+        AND b.time = OLD.time) IS NULL OR Old.eid IN (SELECT * FROM Temp_Contact_Tracing))
     THEN
         RETURN OLD;
     ELSE
