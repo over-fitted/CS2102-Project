@@ -131,7 +131,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE CONSTRAINT TRIGGER _t_bookingNotApproved
-AFTER INSERT ON Bookings
+AFTER INSERT OR UPDATE ON Bookings
 DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW EXECUTE FUNCTION _tf_bookingNotApproved();
 
@@ -161,9 +161,9 @@ BEGIN
         LOOP
             RAISE NOTICE'Close contact employees : %', _v_tempEmployee;
             -- ### Delete booking all made by close contact employee in the next 7 days
-            DELETE FROM Bookings b
-            WHERE b.booker_id = _v_tempEmployee
-                AND ((b.date - NEW.date > 0 AND b.date - NEW.date <= 7) OR (b.date = NEW.date AND b.time > NEW.time));
+            -- DELETE FROM Bookings b
+            -- WHERE b.booker_id = _v_tempEmployee
+            --     AND ((b.date - NEW.date > 0 AND b.date - NEW.date <= 7) OR (b.date = NEW.date AND b.time > NEW.time));
             -- ### Remove close contact employee from all future meetings in the next 7 days
             DELETE FROM Participates p
             WHERE p.eid = _v_tempEmployee
@@ -171,9 +171,9 @@ BEGIN
         END LOOP;
 
         -- ### Delete all booking by this employee
-        DELETE FROM Bookings b
-            WHERE b.booker_id = NEW.eid
-                AND (b.date > NEW.date OR (b.date = NEW.date AND b.time > NEW.time));
+        -- DELETE FROM Bookings b
+        --     WHERE b.booker_id = NEW.eid
+        --         AND (b.date > NEW.date OR (b.date = NEW.date AND b.time > NEW.time));
         -- ### Remove employee from all future meetings
         DELETE FROM Participates p
             WHERE p.eid = NEW.eid
@@ -626,10 +626,13 @@ BEGIN
         -- ### Find all the meetings the person with fever attended
         INSERT INTO attendedMeeting
             SELECT p.room, p.floor, p.date, p.time
-            FROM Participates p
+            FROM Participates p JOIN Booking b ON
+                p.room = b.room AND p.floor = b.floor AND p.date = b.date AND p.time = b.time
             WHERE p.eid = _i_employeeId
-                AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval));
+                AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval))
+                AND b.approver_id IS NOT NULL;
         
+        DELETE FROM attendedMeeting
         -- ### Add in everyone who had attended a the meeting with person with fever
         FOR _v_meeting IN (
             SELECT room, floor, date, time
@@ -1151,8 +1154,8 @@ BEGIN
                     AND b.time = _v_tempStartHour
                     AND b.approver_id IS NULL;
         ELSE
-            RAISE NOTICE 'Employee Dept: %, Manger Dept: %',_v_employeeDept, _v_managerDept;
-            RAISE EXCEPTION 'Employee Department and Manger Department are different';
+            RAISE NOTICE 'Employee Dept: %, Manager Dept: %',_v_employeeDept, _v_managerDept;
+            RAISE EXCEPTION 'Employee Department and Manager Department are different';
             EXIT MainLoop;
         END IF;
         _v_tempStartHour := _v_tempStartHour + '1 hour'::interval;
