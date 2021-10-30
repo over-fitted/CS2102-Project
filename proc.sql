@@ -41,6 +41,7 @@ BEGIN
 
     END LOOP;
     CLOSE curs;
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
