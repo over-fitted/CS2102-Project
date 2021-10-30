@@ -346,3 +346,92 @@ SELECT * FROM Participates;
 
 ROLLBACK;
 */
+
+--Test4
+--Non Compliance test (Need to load data.sql for this test)
+/*
+ employeeid | numdays
+------------+---------
+         40 |       3
+          3 |       3
+          5 |       3
+         42 |       3
+         43 |       3
+         44 |       3
+         46 |       3
+         47 |       3
+         48 |       3
+         49 |       3
+         50 |       3
+          9 |       3
+         10 |       3
+         12 |       3
+         14 |       3
+         17 |       3
+         18 |       3
+         19 |       3
+         20 |       3
+         22 |       3
+         24 |       3
+         25 |       3
+         26 |       3
+         27 |       3
+         28 |       3
+         29 |       3
+         30 |       3
+         31 |       3
+         32 |       3
+         33 |       3
+         34 |       3
+         36 |       3
+         37 |       3
+         38 |       3
+         39 |       3
+          2 |       3
+         41 |       3
+         16 |       2
+         21 |       2
+         35 |       2
+         45 |       2
+          8 |       2
+         23 |       2
+         11 |       1
+         15 |       1
+(45 rows)
+*/
+/*
+BEGIN;
+
+CALL declare_health(1, '2021-01-02', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-02', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-02', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-02', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-02', 35.9, '02:00:00');
+CALL declare_health(15, '2021-01-02', 34.9, '02:00:00');
+CALL declare_health(11, '2021-01-02', 36.2, '02:00:00');
+CALL declare_health(8, '2021-01-02', 37.2, '02:00:00');
+CALL declare_health(45, '2021-01-02', 34.3, '02:00:00');
+CALL declare_health(35, '2021-01-02', 35.4, '02:00:00');
+CALL declare_health(16, '2021-01-02', 34.5, '02:00:00');
+CALL declare_health(23, '2021-01-02', 35.1, '02:00:00');
+CALL declare_health(21, '2021-01-02', 34.6, '02:00:00');
+
+CALL declare_health(1, '2021-01-03', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-03', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-03', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-03', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-03', 35.9, '02:00:00');
+CALL declare_health(15, '2021-01-03', 34.9, '02:00:00');
+CALL declare_health(11, '2021-01-03', 36.2, '02:00:00');
+
+
+CALL declare_health(1, '2021-01-04', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-04', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-04', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-04', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-04', 35.9, '02:00:00');
+
+SELECT * FROM non_compliance('2021-01-02', '2021-01-04');
+
+ROLLBACK;
+*/

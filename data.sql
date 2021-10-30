@@ -176,16 +176,31 @@ END;
 CALL declare_health(1, '2021-01-02', 36.9, '02:00:00');
 CALL declare_health(4, '2021-01-02', 35.9, '02:00:00');
 CALL declare_health(6, '2021-01-02', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-02', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-02', 35.9, '02:00:00');
+CALL declare_health(15, '2021-01-02', 34.9, '02:00:00');
+CALL declare_health(11, '2021-01-02', 36.2, '02:00:00');
+CALL declare_health(8, '2021-01-02', 37.2, '02:00:00');
+CALL declare_health(45, '2021-01-02', 34.3, '02:00:00');
+CALL declare_health(35, '2021-01-02', 35.4, '02:00:00');
+CALL declare_health(16, '2021-01-02', 34.5, '02:00:00');
+CALL declare_health(23, '2021-01-02', 35.1, '02:00:00');
+CALL declare_health(21, '2021-01-02', 34.6, '02:00:00');
+
+CALL declare_health(1, '2021-01-03', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-03', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-03', 36.9, '02:00:00');
 CALL declare_health(7, '2021-01-03', 34.9, '02:00:00');
 CALL declare_health(13, '2021-01-03', 35.9, '02:00:00');
 CALL declare_health(15, '2021-01-03', 34.9, '02:00:00');
-CALL declare_health(11, '2021-01-06', 36.2, '02:00:00');
-CALL declare_health(8, '2021-01-06', 37.2, '02:00:00');
-CALL declare_health(45, '2021-01-06', 34.3, '02:00:00');
-CALL declare_health(35, '2021-01-07', 35.4, '02:00:00');
-CALL declare_health(16, '2021-01-08', 34.5, '02:00:00');
-CALL declare_health(23, '2021-01-08', 35.1, '02:00:00');
-CALL declare_health(35, '2021-01-05', 34.6, '02:00:00');
+CALL declare_health(11, '2021-01-03', 36.2, '02:00:00');
+
+
+CALL declare_health(1, '2021-01-04', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-04', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-04', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-04', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-04', 35.9, '02:00:00');
 
 
 SELECT * FROM Departments;
