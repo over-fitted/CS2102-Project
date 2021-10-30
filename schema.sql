@@ -12,7 +12,7 @@ CREATE TABLE MeetingRooms (
     room INTEGER CHECK (room > 0),
     rname VARCHAR(50) NOT NULL,
     did INTEGER NOT NULL,
-    capacity_change_date DATE NOT NULL,
+    date DATE NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     FOREIGN KEY (did) REFERENCES Departments(did) ON DELETE CASCADE,
     PRIMARY KEY (floor, room)
@@ -47,7 +47,7 @@ CREATE TABLE HealthDeclaration (
 CREATE TABLE Bookings (
     room INTEGER,
     floor INTEGER,
-    date DATE _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
+    date DATE,
     time TIME,
     booker_id INTEGER NOT NULL, 
     approver_id INTEGER,
@@ -64,7 +64,7 @@ CREATE TABLE Participates (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIME _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
+    time TIME,
     CONSTRAINT _c_noShadowClones UNIQUE(eid, date, time),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE
