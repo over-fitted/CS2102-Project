@@ -1,17 +1,6 @@
 \i 'schema.sql'
 \i 'proc.sql'
 
--- Create + approve booking --
-/* Cases:
-1) search_room
-2) unbook_room
-3) view_booking_report
-4) join_meeting
-5) leave_meeting
-6) view_future_meeting
-7) view_manager_report
-*/
-
 -- TEST 1: Booking + approval + search_room
 /*
 Test Case:
