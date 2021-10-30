@@ -12,7 +12,7 @@ CREATE TABLE MeetingRooms (
     room INTEGER CHECK (room > 0),
     rname VARCHAR(50) NOT NULL,
     did INTEGER NOT NULL,
-    date DATE NOT NULL,
+    capacity_change_date DATE NOT NULL,
     capacity INTEGER NOT NULL CHECK (capacity > 0),
     FOREIGN KEY (did) REFERENCES Departments(did) ON DELETE CASCADE,
     PRIMARY KEY (floor, room)
@@ -48,7 +48,7 @@ CREATE TABLE Bookings (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIME,
+    time TIME CONSTRAINT _c_onTheHour CHECK (EXTRACT(MINUTE FROM time) = 0 AND EXTRACT(SECOND FROM time) = 0 AND EXTRACT(milliseconds FROM time) = 0),
     booker_id INTEGER NOT NULL, 
     approver_id INTEGER,
     FOREIGN KEY (booker_id) REFERENCES Employees (eid),
@@ -64,7 +64,7 @@ CREATE TABLE Participates (
     room INTEGER,
     floor INTEGER,
     date DATE,
-    time TIME,
+    time TIME CONSTRAINT _c_onTheHour CHECK (EXTRACT(MINUTE FROM time) = 0 AND EXTRACT(SECOND FROM time) = 0 AND EXTRACT(milliseconds FROM time) = 0),
     CONSTRAINT _c_noShadowClones UNIQUE(eid, date, time),
     PRIMARY KEY (eid, room, floor, date, time),
     FOREIGN KEY (room, floor, date, time) REFERENCES Bookings (room, floor, date, time) ON DELETE CASCADE

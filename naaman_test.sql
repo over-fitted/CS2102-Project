@@ -176,6 +176,10 @@ Test: trivial test to see insertion of new row.
 /* # Remove employee # 
 Expected behavior: 
 Should force an employee to have a resign date.
+Test 1: remove employee by including resign date 
+Test 2: triggers should remove all future records
+
+-- ## Test 1 ##
 */
 -- BEGIN;
 --     --initialization
@@ -191,6 +195,39 @@ Should force an employee to have a resign date.
 --     SELECT * FROM Employees;
 -- COMMIT;
 
+-- ## Test 2 ## 
+BEGIN;
+    --initialization
+    INSERT INTO Departments VALUES(1, 'dept1');
+    INSERT INTO Departments VALUES(2, 'dept2');
+    INSERT INTO MeetingRooms VALUES(1, 1, 'room1', 1, '2017-04-04', 10);
+    INSERT INTO MeetingRooms VALUES(2, 2, 'room2', 2, '2017-04-04', 10);
+    INSERT INTO Employees VALUES(1, 'manager1', '1@office.org', 'Manager', 1, NULL, '63107790', NULL, NULL);
+    INSERT INTO Employees VALUES(2, 'employee2', '2@office.org', 'Senior', 1, NULL, NULL, '96862278', NULL);
+    INSERT INTO Employees VALUES(3, 'employee3', '3@office.org', 'Senior', 1, NULL, NULL, '97700237', NULL);
+    INSERT INTO Bookings VALUES(1, 1, '2017-04-05', '02:00:00', 1, 2);
+    INSERT INTO Bookings VALUES(2, 2, '2017-04-05', '01:00:00', 2, NULL);
+    INSERT INTO Participates VALUES(1, 1, 1, '2017-04-05', '02:00:00');
+    INSERT INTO Participates VALUES(2, 2, 2, '2017-04-05', '01:00:00');
+
+
+    SELECT * FROM MeetingRooms;
+    SELECT * FROM Bookings;
+    SELECT * FROM Participates;
+    SELECT * FROM Employees;
+    
+    -- test -- should return empty
+    CALL remove_employee(
+        2, 
+        '2017-04-04' );
+
+    SELECT * FROM MeetingRooms;
+    SELECT * FROM Bookings;
+    SELECT * FROM Participates;
+    SELECT * FROM Employees;
+
+COMMIT;
+
 /* # search room #
 Expected behavior:
 Should return all rooms that are available from the start hour (inclusive) to the end hour (exclusive). So 
@@ -202,32 +239,32 @@ Test4: test that returns empty when all rooms occupied
 */
 
 -- ## Test 1 --
-BEGIN;
-    --initialization
-    INSERT INTO Departments VALUES(1, 'dept1');
-    INSERT INTO Departments VALUES(2, 'dept2');
-    INSERT INTO MeetingRooms VALUES(1, 1, 'room1', 1, '2017-04-04', 10);
-    INSERT INTO MeetingRooms VALUES(2, 2, 'room2', 2, '2017-04-04', 10);
-    INSERT INTO Employees VALUES(1, 'manager1', '1@office.org', 'Manager', 1, NULL, '63107790', NULL, NULL);
-    INSERT INTO Employees VALUES(2, 'employee2', '2@office.org', 'Senior', 1, NULL, NULL, '96862278', NULL);
-    INSERT INTO Employees VALUES(3, 'employee3', '3@office.org', 'Senior', 1, NULL, NULL, '97700237', NULL);
-    INSERT INTO Bookings VALUES(1, 1, '2017-04-05', '02:00:00', 1, NULL);
-    INSERT INTO Bookings VALUES(2, 2, '2017-04-05', '01:00:00', 2, NULL);
+-- BEGIN;
+--     --initialization
+--     INSERT INTO Departments VALUES(1, 'dept1');
+--     INSERT INTO Departments VALUES(2, 'dept2');
+--     INSERT INTO MeetingRooms VALUES(1, 1, 'room1', 1, '2017-04-04', 10);
+--     INSERT INTO MeetingRooms VALUES(2, 2, 'room2', 2, '2017-04-04', 10);
+--     INSERT INTO Employees VALUES(1, 'manager1', '1@office.org', 'Manager', 1, NULL, '63107790', NULL, NULL);
+--     INSERT INTO Employees VALUES(2, 'employee2', '2@office.org', 'Senior', 1, NULL, NULL, '96862278', NULL);
+--     INSERT INTO Employees VALUES(3, 'employee3', '3@office.org', 'Senior', 1, NULL, NULL, '97700237', NULL);
+--     INSERT INTO Bookings VALUES(1, 1, '2017-04-05', '02:00:00', 1, NULL);
+--     INSERT INTO Bookings VALUES(2, 2, '2017-04-05', '01:00:00', 2, NULL);
 
-    SELECT * FROM MeetingRooms;
-    SELECT * FROM Bookings;
-    SELECT * FROM Participates;
-    SELECT * FROM Employees;
+--     SELECT * FROM MeetingRooms;
+--     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
+--     SELECT * FROM Employees;
     
-    -- test -- should return empty
-    SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '03:00:00'::TIME);
-    SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '05:00:00'::TIME);
+--     -- test -- should return empty
+--     SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '03:00:00'::TIME);
+--     SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '05:00:00'::TIME);
 
-     -- test -- should return only room2
-    SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '03:00:00'::TIME);
-    SELECT search_room(2, '2017-04-05'::DATE, '02:00:00'::TIME, '05:00:00'::TIME);
+--      -- test -- should return only room2
+--     SELECT search_room(2, '2017-04-05'::DATE, '01:00:00'::TIME, '03:00:00'::TIME);
+--     SELECT search_room(2, '2017-04-05'::DATE, '02:00:00'::TIME, '05:00:00'::TIME);
 
-COMMIT;
+-- COMMIT;
 
     -- (IN _i_booking_capacity INTEGER, 
     --     IN _i_date DATE, 
