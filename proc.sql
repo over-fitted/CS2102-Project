@@ -8,36 +8,45 @@ Authors: @tanyjnaaman, @AryanSarswat, @arijitnoobstar, @over-fitted
 
 /*
 @tanyjnaaman
-This trigger ensures that if an employee resigns, his future bookings are removed.
-It also ensures that an update to the resigned field is done exactly once.
+This trigger ensures that if an employee resigns, all his future records are removed.
+It does so by:
+  1. Setting approver_id to null in the Bookings table which another trigger
+     (_t_bookingNotApproved) will handle the removal.
+  2. Removing all meeting participation records. Another
+     trigger (_t_bookerLeavesMeetingCancelled) will handle removal of Bookings 
+     in the case where the participant being deleted is also the booker.
 */
-CREATE OR REPLACE FUNCTION _tf_removeResignedBookings()
+CREATE OR REPLACE FUNCTION _tf_removeResignedRecords()
 RETURNS TRIGGER AS $$
 DECLARE 
-    curs CURSOR FOR (
-        SELECT b.room, b.floor, b.date, b.time
-        FROM Bookings b
-        WHERE b.booker_id = NEW.eid
+    curs CURSOR FOR ( -- find all participation records after resignation date
+        SELECT *
+        FROM Participates p
+        WHERE p.eid = NEW.eid
             AND NEW.resigned_date IS NOT NULL -- resigned
-            AND b.date > NEW.resigned_date
+            AND p.date > NEW.resigned_date -- participation after resignation
     );
     r RECORD;
 BEGIN 
-    RAISE NOTICE 'TRIGGER: Checking employee % has resigned exactly once', NEW.eid;
-    IF ((OLD.resigned_date IS NOT NULL) AND (NEW.resigned_date IS NOT NULL)) THEN
-      RAISE EXCEPTION 'EXCEPTION: Illegal attempt to update resignation date!';
-    END IF;
-    RAISE NOTICE 'TRIGGER: Employee % resigned, checking and removing future bookings he made after %', NEW.eid, NEW.resigned_date;   
+    RAISE NOTICE 'TRIGGER: Update to employee % who has resigned, checking and removing future participations he made after %', NEW.eid, NEW.resigned_date;   
     OPEN curs;
     LOOP
         FETCH curs INTO r;
         EXIT WHEN NOT FOUND;
-
-        DELETE FROM Bookings b
-        WHERE b.room = r.room
-            AND b.floor = r.floor
-            AND b.date = r.date
-            AND b.time = r.time;
+        
+        -- delete participations,
+        -- let other triggers handle deletion of bookings 
+        DELETE FROM Participates p
+        WHERE p.eid = NEW.eid
+            AND p.room = r.room
+            AND p.floor = r.floor
+            AND p.date = r.date
+            AND p.time = r.time;
+            
+        -- set approver ID to null let trigger handle removal
+        UPDATE Bookings  
+        SET approver_id = NULL
+        WHERE approver_id = NEW.eid;
 
     END LOOP;
     CLOSE curs;
@@ -45,9 +54,32 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER _t_removeResignedBookings
+CREATE TRIGGER _t_removeResignedRecords
 AFTER UPDATE ON Employees
-FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedBookings();
+FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedRecords();
+
+/*
+@tanyjnaaman
+This trigger checks that any update to an employee does not allow for an employee's 
+resignation date to be updated more than once. 
+*/
+CREATE OR REPLACE FUNCTION _tf_noMultResignations()
+RETURNS TRIGGER AS $$
+BEGIN 
+    IF ((OLD.resigned_date IS NOT NULL) AND (NEW.resigned_date = OLD.resigned_date)) THEN
+      RAISE NOTICE 'TRIGGER: Illegal attempt to update resignation date for employee %!', OLD.eid;
+      RETURN NULL;
+    ELSE 
+      RETURN NEW;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER _t_noMultResignations
+AFTER UPDATE ON Employees
+FOR EACH ROW EXECUTE FUNCTION _tf_noMultResignations();
+
+
 
 /*
 @tanyjnaaman
