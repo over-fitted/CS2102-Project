@@ -113,7 +113,7 @@ BEGIN
             FROM MeetingRooms m
             WHERE r.room = m.room
                 AND r.floor = m.floor
-                AND r.date > m.date
+                AND r.date > m.capacity_change_date
         )) THEN 
             DELETE FROM Bookings b
             WHERE b.room = r.room
