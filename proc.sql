@@ -632,7 +632,6 @@ BEGIN
                 AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval))
                 AND b.approver_id IS NOT NULL;
         
-        DELETE FROM attendedMeeting
         -- ### Add in everyone who had attended a the meeting with person with fever
         FOR _v_meeting IN (
             SELECT room, floor, date, time
