@@ -118,7 +118,75 @@ CALL add_employee('Wallis', NULL, NULL, '22333986', 'Junior', 12);
 CALL add_employee('Wandie', NULL, NULL, '78849760', 'Senior', 11);
 CALL add_employee('Wilmar', NULL, NULL, '42813905', 'Junior', 12);
 
--- ### Make Bookings
+-- ### Make Bookings and Join Meetings
+BEGIN;
+
+CALL book_room(10, 18,'2021-01-01', '00:00:00', '01:00:00', 43);
+CALL join_meeting(10, 18,'2021-01-01', '00:00:00', '01:00:00', 4);
+CALL join_meeting(10, 18,'2021-01-01', '00:00:00', '01:00:00', 33);
+CALL join_meeting(10, 18,'2021-01-01', '00:00:00', '01:00:00', 6);
+CALL join_meeting(10, 18,'2021-01-01', '00:00:00', '01:00:00', 23);
+CALL approve_meeting(18, 10,'2021-01-01', '00:00:00', '01:00:00', 43);
+
+CALL book_room(2, 10,'2021-01-02', '03:00:00', '04:00:00', 30);
+CALL join_meeting(2, 10,'2021-01-02', '03:00:00', '04:00:00', 24);
+CALL join_meeting(2, 10,'2021-01-02', '03:00:00', '04:00:00', 33);
+CALL join_meeting(2, 10,'2021-01-02', '03:00:00', '04:00:00', 16);
+CALL join_meeting(2, 10,'2021-01-02', '03:00:00', '04:00:00', 35);
+CALL join_meeting(2, 10,'2021-01-02', '03:00:00', '04:00:00', 43);
+CALL approve_meeting(10, 2,'2021-01-02', '03:00:00', '04:00:00', 30);
+
+CALL book_room(8, 6,'2021-01-03', '03:00:00', '04:00:00', 36);
+CALL join_meeting(8, 6,'2021-01-03', '03:00:00', '04:00:00', 26);
+CALL join_meeting(8, 6,'2021-01-03', '03:00:00', '04:00:00', 17);
+CALL join_meeting(8, 6,'2021-01-03', '03:00:00', '04:00:00', 11);
+CALL join_meeting(8, 6,'2021-01-03', '03:00:00', '04:00:00', 10);
+CALL join_meeting(8, 6,'2021-01-03', '03:00:00', '04:00:00', 14);
+CALL approve_meeting(6, 8,'2021-01-03', '03:00:00', '04:00:00', 45);
+
+CALL book_room(31, 25,'2021-01-04', '03:00:00', '04:00:00', 15);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 21);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 5);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 48);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 29);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 37);
+CALL join_meeting(31, 25,'2021-01-04', '03:00:00', '04:00:00', 20);
+CALL approve_meeting(25, 31,'2021-01-04', '03:00:00', '04:00:00', 7);
+
+CALL book_room(41, 24,'2021-01-05', '03:00:00', '04:00:00', 19);
+CALL join_meeting(41, 24,'2021-01-05', '03:00:00', '04:00:00', 46);
+CALL join_meeting(41, 24,'2021-01-05', '03:00:00', '04:00:00', 14);
+CALL join_meeting(41, 24,'2021-01-05', '03:00:00', '04:00:00', 30);
+CALL join_meeting(41, 24,'2021-01-05', '03:00:00', '04:00:00', 23);
+CALL join_meeting(41, 24,'2021-01-05', '03:00:00', '04:00:00', 41);
+CALL approve_meeting(24, 41,'2021-01-05', '03:00:00', '04:00:00', 3);
+
+CALL book_room(41, 8,'2021-01-06', '03:00:00', '04:00:00', 47);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 1);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 19);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 38);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 3);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 29);
+CALL join_meeting(41, 8,'2021-01-06', '03:00:00', '04:00:00', 30);
+CALL approve_meeting(8, 41,'2021-01-06', '03:00:00', '04:00:00', 30);
+
+END;
+
+-- ### Declare Health
+CALL declare_health(1, '2021-01-02', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-02', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-02', 36.9, '02:00:00');
+CALL declare_health(7, '2021-01-03', 34.9, '02:00:00');
+CALL declare_health(13, '2021-01-03', 35.9, '02:00:00');
+CALL declare_health(15, '2021-01-03', 34.9, '02:00:00');
+CALL declare_health(11, '2021-01-06', 36.2, '02:00:00');
+CALL declare_health(8, '2021-01-06', 37.2, '02:00:00');
+CALL declare_health(45, '2021-01-06', 34.3, '02:00:00');
+CALL declare_health(35, '2021-01-07', 35.4, '02:00:00');
+CALL declare_health(16, '2021-01-08', 34.5, '02:00:00');
+CALL declare_health(23, '2021-01-08', 35.1, '02:00:00');
+CALL declare_health(35, '2021-01-05', 34.6, '02:00:00');
+
 
 SELECT * FROM Departments;
 
@@ -126,8 +194,8 @@ SELECT * FROM MeetingRooms;
 
 SELECT * FROM Employees;
 
+SELECT * FROM Bookings;
 
--- ### Declare Health
+SELECT * FROM Participates;
 
-
--- ### Join Meetings
+SELECT * FROM HealthDeclaration;

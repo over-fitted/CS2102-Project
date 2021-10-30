@@ -658,7 +658,7 @@ BEGIN
         -- ### Find all the meetings the person with fever attended
         INSERT INTO attendedMeeting
             SELECT p.room, p.floor, p.date, p.time
-            FROM Participates p JOIN Booking b ON
+            FROM Participates p JOIN Bookings b ON
                 p.room = b.room AND p.floor = b.floor AND p.date = b.date AND p.time = b.time
             WHERE p.eid = _i_employeeId
                 AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval))
