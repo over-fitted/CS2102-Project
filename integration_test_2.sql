@@ -46,9 +46,10 @@ Participates
    8 |    6 |     6 | 2021-01-02 | 00:00:00
    9 |    6 |     6 | 2021-01-02 | 00:00:00
    7 |    8 |     8 | 2021-01-04 | 03:00:00
+(13 rows)
 */
 
-/*
+
 BEGIN;
 -- Add Departments
 CALL add_department (0, 'Human Resources');
@@ -135,7 +136,7 @@ SELECT * FROM Bookings;
 SELECT * FROM Participates;
 
 ROLLBACK;
-*/
+
 
 
 --Test2
@@ -230,13 +231,14 @@ ROLLBACK;
 /*
  room | floor |    date    |   time   | booker_id | approver_id
 ------+-------+------------+----------+-----------+-------------
+    5 |     5 | 2021-01-09 | 00:00:00 |         7 |
     1 |     1 | 2021-01-07 | 00:00:00 |         1 |           1
     3 |     3 | 2021-01-20 | 00:00:00 |         3 |           1
     4 |     4 | 2021-01-01 | 00:00:00 |         4 |           1
     6 |     6 | 2021-01-02 | 00:00:00 |         7 |           1
     7 |     7 | 2021-01-17 | 01:00:00 |         4 |           1
     8 |     8 | 2021-01-21 | 00:00:00 |         4 |           1
-(6 rows)
+(7 rows)
 
 
  eid | room | floor |    date    |   time
@@ -246,6 +248,8 @@ ROLLBACK;
    7 |    1 |     1 | 2021-01-07 | 00:00:00
    3 |    1 |     1 | 2021-01-07 | 00:00:00
    4 |    7 |     7 | 2021-01-17 | 01:00:00
+   7 |    5 |     5 | 2021-01-09 | 00:00:00
+   9 |    5 |     5 | 2021-01-09 | 00:00:00
    3 |    3 |     3 | 2021-01-20 | 00:00:00
    4 |    8 |     8 | 2021-01-21 | 00:00:00
    3 |    8 |     8 | 2021-01-21 | 00:00:00
@@ -255,9 +259,9 @@ ROLLBACK;
    7 |    6 |     6 | 2021-01-02 | 00:00:00
    8 |    6 |     6 | 2021-01-02 | 00:00:00
    9 |    6 |     6 | 2021-01-02 | 00:00:00
-(14 rows)
+(16 rows)
 */
-
+/*
 BEGIN;
 -- Add Departments
 CALL add_department (0, 'Human Resources');
@@ -304,6 +308,10 @@ CALL join_meeting(5, 5,'2021-01-17', '00:00:00', '01:00:00', 2);
 CALL book_room(7, 7,'2021-01-17', '01:00:00', '02:00:00', 4);
 CALL join_meeting(5, 5,'2021-01-17', '01:00:00', '02:00:00', 7);
 
+--Employee 7 booked a room but it has not been approved, Thus 9 should not appear in close contacts
+CALL book_room(5, 5,'2021-01-9', '00:00:00', '01:00:00', 7);
+CALL join_meeting(5, 5,'2021-01-9', '00:00:00', '01:00:00', 9);
+
 --Employee 3 is a close contact but meeting is after 7 days, should not be deleted
 CALL book_room(3, 3,'2021-01-20', '00:00:00', '01:00:00', 3);
 
@@ -337,3 +345,4 @@ SELECT * FROM Bookings;
 SELECT * FROM Participates;
 
 ROLLBACK;
+*/
