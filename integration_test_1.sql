@@ -710,17 +710,17 @@ CALL
 CALL
 CALL
 CALL
-psql:integration_test_1.sql:776: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
+psql:integration_test_1.sql:777: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
 CALL
-psql:integration_test_1.sql:777: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 11:00:00 is within capacity
+psql:integration_test_1.sql:778: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 11:00:00 is within capacity
 CALL
-psql:integration_test_1.sql:778: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
+psql:integration_test_1.sql:779: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
 CALL
-psql:integration_test_1.sql:779: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
+psql:integration_test_1.sql:780: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
 CALL
 CALL
 CALL
- room | floor |    date    |   time   | booker_id | approver_id
+ room | floor |    date    |   time   | booker_id | approver_id 
 ------+-------+------------+----------+-----------+-------------
     1 |     1 | 2021-02-01 | 11:00:00 |         2 |
     1 |     1 | 2021-02-02 | 11:00:00 |         2 |
@@ -729,28 +729,42 @@ CALL
 (4 rows)
 
 
-psql:integration_test_1.sql:787: NOTICE:  TRIGGER: Checking employee 2 has resigned exactly once
-psql:integration_test_1.sql:787: NOTICE:  TRIGGER: Employee 2 resigned, checking and removing future bookings he made after 2021-02-01
+ eid | room | floor |    date    |   time
+-----+------+-------+------------+----------
+   2 |    1 |     1 | 2021-02-01 | 10:00:00
+   2 |    1 |     1 | 2021-02-01 | 11:00:00
+   2 |    1 |     1 | 2021-02-02 | 10:00:00
+   2 |    1 |     1 | 2021-02-02 | 11:00:00
+(4 rows)
+
+
+psql:integration_test_1.sql:789: NOTICE:  TRIGGER: Update to employee 2, checking if resigned and removing future participations he made after 2021-02-01. Implicitly removing future approvals by deferred trigger.
+psql:integration_test_1.sql:789: NOTICE:  TRIGGER: Booker 2 no longer participating in meeting on 2021-02-02, meeting removed.
+psql:integration_test_1.sql:789: NOTICE:  TRIGGER: Booker 2 no longer participating in meeting on 2021-02-02, meeting removed.
 CALL
- room | floor |    date    |   time   | booker_id | approver_id
+ room | floor |    date    |   time   | booker_id | approver_id 
 ------+-------+------------+----------+-----------+-------------
     1 |     1 | 2021-02-01 | 11:00:00 |         2 |
     1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
 (2 rows)
 
 
-psql:integration_test_1.sql:791: NOTICE:  TRIGGER: Booking cannot be made by employees who have resigned
-psql:integration_test_1.sql:791: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-03, time 10:00:00 is within capacity
-psql:integration_test_1.sql:791: NOTICE:  Employee 2: Booking at floor 1, room 1 on 2021-02-03 at 10:00:00 does not exist
+ eid | room | floor |    date    |   time
+-----+------+-------+------------+----------
+   2 |    1 |     1 | 2021-02-01 | 10:00:00
+   2 |    1 |     1 | 2021-02-01 | 11:00:00
+(2 rows)
+
+
+psql:integration_test_1.sql:795: NOTICE:  TRIGGER: Booking cannot be made by employees who have resigned
+psql:integration_test_1.sql:795: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-03, time 10:00:00 is within capacity
+psql:integration_test_1.sql:795: NOTICE:  Employee 2: Booking at floor 1, room 1 on 2021-02-03 at 10:00:00 does not exist
 CALL
  room | floor |    date    |   time   | booker_id | approver_id
 ------+-------+------------+----------+-----------+-------------
     1 |     1 | 2021-02-01 | 11:00:00 |         2 |
     1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
 (2 rows)
-
-
-ROLLBACK
 */ 
 -- BEGIN;
 --     -- SETUP
@@ -768,10 +782,13 @@ ROLLBACK
 --     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
 
 --     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
 
 --     -- DELETE EMPLOYEE
 --     CALL remove_employee(2, '2021-2-1');
 --     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
+
 
 --     --Fail to make new bookings
 --     CALL book_room(1, 1, '2021-2-3'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
@@ -791,7 +808,76 @@ Test Case:
 5. removed employee cannot create new attendance
 
 EXPECTED:
-*/
+BEGIN
+CALL
+CALL
+CALL
+CALL
+psql:integration_test_1.sql:819: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:820: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 11:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:821: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:822: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:823: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 12:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:825: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:826: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 11:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:827: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:828: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
+CALL
+CALL
+CALL
+ eid | room | floor |    date    |   time
+-----+------+-------+------------+----------
+   1 |    1 |     1 | 2021-02-01 | 10:00:00
+   1 |    1 |     1 | 2021-02-01 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 10:00:00
+   1 |    1 |     1 | 2021-02-02 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 12:00:00
+   2 |    1 |     1 | 2021-02-01 | 10:00:00
+   2 |    1 |     1 | 2021-02-01 | 11:00:00
+   2 |    1 |     1 | 2021-02-02 | 10:00:00
+   2 |    1 |     1 | 2021-02-02 | 11:00:00
+(9 rows)
+
+
+psql:integration_test_1.sql:836: NOTICE:  TRIGGER: Update to employee 2, checking if resigned and removing future participations he made after 2021-02-01. Implicitly removing future approvals by deferred trigger.
+CALL
+ eid | room | floor |    date    |   time   
+-----+------+-------+------------+----------
+   1 |    1 |     1 | 2021-02-01 | 10:00:00
+   1 |    1 |     1 | 2021-02-01 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 10:00:00
+   1 |    1 |     1 | 2021-02-02 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 12:00:00
+   2 |    1 |     1 | 2021-02-01 | 10:00:00
+   2 |    1 |     1 | 2021-02-01 | 11:00:00
+(7 rows)
+
+
+psql:integration_test_1.sql:840: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 12:00:00 is within capacity
+psql:integration_test_1.sql:840: NOTICE:  TRIGGER: Booking cannot be joined by employees who have resigned
+CALL
+ eid | room | floor |    date    |   time   
+-----+------+-------+------------+----------
+   1 |    1 |     1 | 2021-02-01 | 10:00:00
+   1 |    1 |     1 | 2021-02-01 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 10:00:00
+   1 |    1 |     1 | 2021-02-02 | 11:00:00
+   1 |    1 |     1 | 2021-02-02 | 12:00:00
+   2 |    1 |     1 | 2021-02-01 | 10:00:00
+   2 |    1 |     1 | 2021-02-01 | 11:00:00
+(7 rows)
+
+
+
+-- */
 -- BEGIN;
 --     -- SETUP
 --     CALL add_department(1, 'firstDep');
@@ -820,7 +906,7 @@ EXPECTED:
 --     SELECT * FROM Participates;
 
 --     --Fail to make new attendance
---     CALL join_meeting(1, 1, '2021-2-3'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
+--     CALL join_meeting(1, 1, '2021-2-2'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
 --     SELECT * FROM Participates;
 -- ROLLBACK;
 
@@ -831,27 +917,73 @@ Test Case:
 1. removed employee's future approval removed
 2. removed employee's past approval preserved
 3. removed employee cannot create new approval
+
+EXPECTED:
+BEGIN
+CALL
+CALL
+CALL
+CALL
+psql:integration_test_1.sql:860: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:861: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
+CALL
+psql:integration_test_1.sql:862: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
+CALL
+CALL
+CALL
+ room | floor |    date    |   time   | booker_id | approver_id
+------+-------+------------+----------+-----------+-------------
+    1 |     1 | 2021-02-02 | 11:00:00 |         2 |
+    1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
+    1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
+(3 rows)
+
+
+psql:integration_test_1.sql:870: NOTICE:  TRIGGER: Update to employee 1, checking if resigned and removing future participations he made after 2021-02-01. Implicitly removing future approvals by deferred trigger.
+CALL
+ room | floor |    date    |   time   | booker_id | approver_id
+------+-------+------------+----------+-----------+-------------
+    1 |     1 | 2021-02-02 | 11:00:00 |         2 |
+    1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
+    1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
+(3 rows)
+
+
+psql:integration_test_1.sql:872: NOTICE:  TRIGGER (DEFERRED): Booking is not approved by manager, Booking deleted
+COMMIT
+BEGIN
+ room | floor |    date    |   time   | booker_id | approver_id
+------+-------+------------+----------+-----------+-------------
+    1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
+    1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
+(2 rows)
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
 
-    CALL approve_meeting(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL approve_meeting(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
 
-    SELECT * FROM Bookings;
+--     SELECT * FROM Bookings;
 
-    -- DELETE EMPLOYEE
-    CALL remove_employee(1, '2021-2-1');
-    SELECT * FROM Bookings;
+--     -- DELETE EMPLOYEE
+--     CALL remove_employee(1, '2021-2-1');
+--     SELECT * FROM Bookings; -- approvals will not be deleted before COMMIT due to deferred trigger
+-- COMMIT;
 
-    --Fail to make new approval
-    CALL approve_meeting(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
-ROLLBACK;
+
+-- BEGIN;
+--     SELECT * FROM Bookings; -- approvals will be deleted after COMMIT
+
+--     --Fail to make new approval
+--     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
+-- ROLLBACK;

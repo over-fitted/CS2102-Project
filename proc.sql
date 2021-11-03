@@ -28,7 +28,7 @@ DECLARE
     );
     r RECORD;
 BEGIN 
-    RAISE NOTICE 'TRIGGER: Update to employee % who has resigned, checking and removing future participations he made after %', NEW.eid, NEW.resigned_date;   
+    RAISE NOTICE 'TRIGGER: Update to employee %, checking if resigned and removing future participations he made after %. Implicitly removing future approvals by deferred trigger.', NEW.eid, NEW.resigned_date;   
     OPEN curs;
     LOOP
         FETCH curs INTO r;
@@ -44,6 +44,7 @@ BEGIN
             AND p.time = r.time;
             
         -- set approver ID to null let trigger handle removal
+        -- of future bookings he approved
         UPDATE Bookings  
         SET approver_id = NULL
         WHERE approver_id = NEW.eid;
@@ -154,7 +155,13 @@ BEGIN
         AND b.booker_id = NEW.booker_id;
     
     IF (_v_approver IS NULL) THEN
-        RAISE EXCEPTION 'Booking is not approved by manager, Booking deleted';
+        RAISE NOTICE 'TRIGGER (DEFERRED): Booking is not approved by manager, Booking deleted';
+        DELETE FROM Bookings
+        WHERE room = NEW.room
+            AND date = NEW.date
+            AND time = NEW.time
+            AND booker_id = NEW.booker_id;
+
         RETURN NULL;
     ELSE
         RETURN NEW;
@@ -482,7 +489,8 @@ FOR EACH ROW EXECUTE FUNCTION _tf_resignedCannotJoin();
 
 /*
 @arijitnoobstar
-This trigger ensures that if a booking is approved, nobody can leave it anymore.
+This trigger ensures that if a booking is approved, nobody can leave it anymore, 
+unless he has resigned before the date of the meeting.
 */
 CREATE OR REPLACE FUNCTION _tf_approvalCheckToLeave()
 RETURNS TRIGGER AS $$
@@ -491,7 +499,12 @@ BEGIN
         WHERE b.room = OLD.room
         AND b.floor = OLD.floor
         AND b.date = OLD.date
-        AND b.time = OLD.time) IS NULL OR Old.eid IN (SELECT * FROM Temp_Contact_Tracing))
+        AND b.time = OLD.time) IS NULL -- not approved
+        OR OLD.eid IN (SELECT * FROM Temp_Contact_Tracing) -- removed after being contact traced
+        OR ((SELECT resigned_date 
+            FROM Employees e
+            WHERE e.eid = OLD.eid) < OLD.date)
+    )
     THEN
         RETURN OLD;
     ELSE
@@ -519,6 +532,7 @@ BEGIN
         AND b.time = OLD.time
         AND b.booker_id = OLD.eid)
     THEN
+        RAISE NOTICE 'TRIGGER: Booker % no longer participating in meeting on %, meeting removed.', OLD.eid, OLD.date;
         CALL unbook_room(OLD.room, OLD.floor, OLD.date, OLD.time, OLD.time + INTERVAL '1 hour', OLD.eid);
     END IF;
     RETURN NULL;
