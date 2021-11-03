@@ -672,7 +672,7 @@ BEGIN
         -- ### Find all the meetings the person with fever attended
         INSERT INTO attendedMeeting
             SELECT p.room, p.floor, p.date, p.time
-            FROM Participates p JOIN Booking b ON
+            FROM Participates p JOIN Bookings b ON
                 p.room = b.room AND p.floor = b.floor AND p.date = b.date AND p.time = b.time
             WHERE p.eid = _i_employeeId
                 AND ((_v_dateDeclare - p.date > 0 AND _v_dateDeclare - p.date <= 3) OR (p.date = _v_dateDeclare AND _v_timeDeclare - p.time >= '0 seconds'::interval))
@@ -1151,8 +1151,7 @@ AS $$
 <<BeginLabel>>
 DECLARE
     _v_tempStartHour TIME := _i_startHour;
-    _v_employeeId INTEGER;
-    _v_employeeDept INTEGER;
+    _v_meetingRoomDept INTEGER;
     _v_managerDept INTEGER;
 BEGIN   
     -- Ensure input is correct
@@ -1171,25 +1170,19 @@ BEGIN
         WHERE e.eid = _i_managerEid
             AND e.resigned_date IS NULL;
 
-        SELECT b.booker_id INTO _v_employeeId
-        FROM Bookings b
-        WHERE b.floor = _i_floorNumber
-                AND b.room = _i_roomNumber
-                AND b.date = _i_inputDate
-                AND b.time = _v_tempStartHour;
-
-        SELECT e.did INTO _v_employeeDept
-        FROM Employees e
-        WHERE e.eid = _v_employeeId;
+        SELECT m.did INTO _v_meetingRoomDept
+        FROM MeetingRooms m
+        WHERE m.room = _i_roomNumber
+            AND m.floor = _i_floorNumber;
 
        
         -- If manger department is null he has resigned or doesnt exist
         IF (_v_managerDept IS NULL) THEN
-            RAISE EXCEPTION 'Manager is Resigned';
+            RAISE EXCEPTION 'Manager is Resigned or does not exist';
         END IF;
         
-        -- Approve all bookings until employeeDept != mangerDept
-        IF (_v_managerDept = _v_employeeDept) THEN
+        -- Approve all bookings until meetingRoomDept != mangerDept
+        IF (_v_managerDept = _v_meetingRoomDept) THEN
             UPDATE Bookings b
                 SET approver_id = _i_managerEid
                 WHERE 
@@ -1199,8 +1192,8 @@ BEGIN
                     AND b.time = _v_tempStartHour
                     AND b.approver_id IS NULL;
         ELSE
-            RAISE NOTICE 'Employee Dept: %, Manager Dept: %',_v_employeeDept, _v_managerDept;
-            RAISE EXCEPTION 'Employee Department and Manager Department are different';
+            RAISE NOTICE 'Meeting Room Dept: %, Manager Dept: %',_v_meetingRoomDept, _v_managerDept;
+            RAISE EXCEPTION 'Manager is from a different department than the Meeting Room department';
             EXIT MainLoop;
         END IF;
         _v_tempStartHour := _v_tempStartHour + '1 hour'::interval;
