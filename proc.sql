@@ -640,7 +640,6 @@ DECLARE
     _v_dateDeclare DATE;
     _v_timeDeclare TIME;
     _v_meeting RECORD;
-    print_test INTEGER;
 BEGIN
     -- ### Find latest date of declaration if temperature is over 37.5
     SELECT h.date INTO _v_dateDeclare
@@ -885,7 +884,7 @@ CREATE OR REPLACE PROCEDURE change_capacity
     (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE, IN _i_eid INTEGER)
 AS $$
 BEGIN
-    -- check if employer changing capacity is a mananger of the department
+    -- check if employer changing capacity is a manager of the department
     IF EXISTS (
         SELECT 1
         FROM (Departments NATURAL JOIN Employees) d, MeetingRooms m
@@ -1110,8 +1109,8 @@ BEGIN
     WHILE _v_booking_time < _i_end_time LOOP
         -- Remove from participates
         IF EXISTS(SELECT 1 FROM Participates p
-        WHERE p.floor = _i_room
-        AND p.room = _i_floor
+        WHERE p.floor = _i_floor
+        AND p.room = _i_room
         AND p.date = _i_date
         AND p.time = _v_booking_time
         AND p.eid = _i_eid)
