@@ -25,9 +25,9 @@ CREATE TABLE Employees (
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
-    home_number VARCHAR(50) CHECK(home_number ~ '^[+-0-9]+$'), -- can stay in same house
-    mobile_number VARCHAR(50) UNIQUE CHECK(home_number ~ '^[+-0-9]+$'), -- need to contact
-    office_number VARCHAR(50) CHECK(home_number ~ '^[+-0-9]+$'), -- can share office number 
+    home_number VARCHAR(50) CHECK(home_number ~ '^[+0-9]+$'), -- can stay in same house
+    mobile_number VARCHAR(50) UNIQUE CHECK(home_number ~ '^[+0-9]+$'), -- need to contact
+    office_number VARCHAR(50) CHECK(home_number ~ '^[+0-9]+$'), -- can share office number 
     
     CONSTRAINT _c_mustHaveContact CHECK ((home_number IS NOT NULL) OR (mobile_number IS NOT NULL) OR (office_number IS NOT NULL)),
     FOREIGN KEY (did) REFERENCES Departments(did)
