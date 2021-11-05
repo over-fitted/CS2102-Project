@@ -16,7 +16,7 @@ It does so by:
      trigger (_t_bookerLeavesMeetingCancelled) will handle removal of Bookings 
      in the case where the participant being deleted is also the booker.
 */
-DROP FUNCTION IF EXISTS _tf_removeResignedRecords;
+DROP FUNCTION IF EXISTS _tf_removeResignedRecords CASCADE;
 CREATE OR REPLACE FUNCTION _tf_removeResignedRecords()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -66,7 +66,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedRecords();
 This trigger checks that any update to an employee does not allow for an employee's 
 resignation date to be updated more than once. 
 */
-DROP FUNCTION IF EXISTS _tf_noMultResignations;
+DROP FUNCTION IF EXISTS _tf_noMultResignations CASCADE;
 CREATE OR REPLACE FUNCTION _tf_noMultResignations()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -90,7 +90,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_noMultResignations();
 This trigger ensures that upon a room capacity change, all future bookings that violate it
 are removed.
 */
-DROP FUNCTION IF EXISTS _tf_removeViolatingBookings;
+DROP FUNCTION IF EXISTS _tf_removeViolatingBookings CASCADE;
 CREATE OR REPLACE FUNCTION _tf_removeViolatingBookings()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -143,7 +143,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeViolatingBookings();
 This trigger ensures that a booking that is not approved 
 in the same transaction (i.e. immediately) is deleted.
 */
-DROP FUNCTION IF EXISTS _tf_bookingNotApproved;
+DROP FUNCTION IF EXISTS _tf_bookingNotApproved CASCADE;
 CREATE OR REPLACE FUNCTION _tf_bookingNotApproved() 
 RETURNS TRIGGER AS $$
 
@@ -187,7 +187,7 @@ those they booked (i.e. their bookings that lie in the next 7 days are also dele
 
 This trigger enforces these changes.
 */
-DROP FUNCTION IF EXISTS _tf_fever_event;
+DROP FUNCTION IF EXISTS _tf_fever_event CASCADE;
 CREATE OR REPLACE FUNCTION _tf_fever_event()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -205,20 +205,12 @@ BEGIN
         FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
         LOOP
             RAISE NOTICE'Close contact employees : %', _v_tempEmployee;
-            -- ### Delete booking all made by close contact employee in the next 7 days
-            -- DELETE FROM Bookings b
-            -- WHERE b.booker_id = _v_tempEmployee
-            --     AND ((b.date - NEW.date > 0 AND b.date - NEW.date <= 7) OR (b.date = NEW.date AND b.time > NEW.time));
             -- ### Remove close contact employee from all future meetings in the next 7 days
             DELETE FROM Participates p
             WHERE p.eid = _v_tempEmployee
                 AND ((p.date - NEW.date > 0 AND p.date - NEW.date <= 7)  OR (p.date = NEW.date AND p.time > NEW.time));
         END LOOP;
 
-        -- ### Delete all booking by this employee
-        -- DELETE FROM Bookings b
-        --     WHERE b.booker_id = NEW.eid
-        --         AND (b.date > NEW.date OR (b.date = NEW.date AND b.time > NEW.time));
         -- ### Remove employee from all future meetings
         DELETE FROM Participates p
             WHERE p.eid = NEW.eid
@@ -240,7 +232,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
 This trigger ensures that a booking that is made is within the booking capacity. 
 If it is not, it blocks the booking.
 */
-DROP FUNCTION IF EXISTS _tf_bookingWithinCapacity;
+DROP FUNCTION IF EXISTS _tf_bookingWithinCapacity CASCADE;
 CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -277,7 +269,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
 This trigger ensures that a booking is made by either a Manager or Senior. 
 If it is not, it blocks the booking.
 */
-DROP FUNCTION IF EXISTS _tf_bookingByBooker;
+DROP FUNCTION IF EXISTS _tf_bookingByBooker CASCADE;
 CREATE OR REPLACE FUNCTION _tf_bookingByBooker()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -305,7 +297,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingByBooker();
 This trigger ensures that an employee with fever cannot book a meeting room.
 It assumes that the latest recorded temperature reading is indicative of his/her current temperature
 */
-DROP FUNCTION IF EXISTS _tf_feverCannotBook;
+DROP FUNCTION IF EXISTS _tf_feverCannotBook CASCADE;
 CREATE OR REPLACE FUNCTION _tf_feverCannotBook()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -336,6 +328,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotBook();
 This trigger ensures that a booking is not made by a resigned employee. 
 If it is, it blocks the booking.
 */
+DROP FUNCTION IF EXISTS _tf_resignedCannotBook CASCADE;
 CREATE OR REPLACE FUNCTION _tf_resignedCannotBook()
 RETURNS TRIGGER AS $$
 
@@ -361,6 +354,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_resignedCannotBook();
 This trigger ensures that anyone who joins a meeting, joins an existing valid one .
 If it is not, it blocks the participation.
 */
+DROP FUNCTION IF EXISTS _tf_checkBookingExists CASCADE;
 CREATE OR REPLACE FUNCTION _tf_checkBookingExists()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -386,6 +380,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_checkBookingExists();
 @arijitnoobstar
 This trigger ensures that if a booking is approved, nobody can join it anymore.
 */
+DROP FUNCTION IF EXISTS _tf_approvalCheckToJoin CASCADE;
 CREATE OR REPLACE FUNCTION _tf_approvalCheckToJoin()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -412,6 +407,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToJoin();
 This trigger ensures that an employee with fever cannot join a meeting.
 It assumes that the latest recorded temperature reading is indicative of his/her current temperature
 */
+DROP FUNCTION IF EXISTS _tf_feverCannotJoin CASCADE;
 CREATE OR REPLACE FUNCTION _tf_feverCannotJoin()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -442,6 +438,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_feverCannotJoin();
 This trigger ensures that a booking is not joined by a resigned employee. 
 If it is, it blocks the participation.
 */
+DROP FUNCTION IF EXISTS _tf_resignedCannotJoin CASCADE;
 CREATE OR REPLACE FUNCTION _tf_resignedCannotJoin()
 RETURNS TRIGGER AS $$
 
@@ -467,6 +464,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_resignedCannotJoin();
 This trigger ensures that if a booking is approved, nobody can leave it anymore, 
 unless he has resigned before the date of the meeting.
 */
+DROP FUNCTION IF EXISTS _tf_approvalCheckToLeave CASCADE; 
 CREATE OR REPLACE FUNCTION _tf_approvalCheckToLeave()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -497,6 +495,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_approvalCheckToLeave();
 @arijitnoobstar
 This trigger ensures that if the booker leaves the meeting, the whole meeting is cancelled
 */
+DROP FUNCTION IF EXISTS _tf_bookerLeavesMeetingCancelled CASCADE;
 CREATE OR REPLACE FUNCTION _tf_bookerLeavesMeetingCancelled()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -530,6 +529,7 @@ IN:
 
 @return BOOLEAN      Indicates if the time is on the hour.
 */
+DROP FUNCTION IF EXISTS _f_bookingOnTheHour CASCADE;
 CREATE OR REPLACE FUNCTION _f_bookingOnTheHour(IN _i_time TIME)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -557,6 +557,7 @@ defined time period and given an expected booking capacity needed.
 
 @return TABLE(_o_floor INTEGER, _o_room INTEGER, _o_did INTEGER, _o_capacity INTEGER)
 */
+DROP FUNCTION IF EXISTS search_room CASCADE;
 CREATE OR REPLACE FUNCTION search_room
     (IN _i_booking_capacity INTEGER, 
         IN _i_date DATE, 
@@ -608,6 +609,7 @@ been in the same booking as him in the last three days. This method does so.
 @param INTEGER _i_employeeId Employee ID.
 @return TABLE Table of INTEGER Employee ID values that have been in close contact.
 */
+DROP FUNCTION IF EXISTS contact_tracing CASCADE;
 CREATE OR REPLACE FUNCTION contact_tracing
     (IN _i_employeeId INTEGER)
 RETURNS TABLE(_o_closeContactEmployeeId INTEGER) AS $$
@@ -680,6 +682,7 @@ This method finds all employees that do not comply with the daily health declara
 @param DATE _i_ endDate  Date to check till. 
 @return TABLE            Table of Employee ID and number of days they did not comply.
 */
+DROP FUNCTION IF EXISTS non_compliance CASCADE;
 CREATE OR REPLACE FUNCTION non_compliance
     (IN _i_startDate DATE, IN _i_endDate DATE)
 RETURNS TABLE(employeeId INTEGER, numDays BIGINT) AS $$
@@ -713,6 +716,7 @@ date inclusive.
 
 @return TABLE(floor INT, room INT, date DATE, startTime TIME, isApproved BOOLEAN)
 */
+DROP FUNCTION IF EXISTS view_booking_report CASCADE;
 CREATE OR REPLACE FUNCTION view_booking_report(IN _i_startDate DATE, IN _i_eid INT)
 RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_isApproved BOOLEAN)
 AS $$    
@@ -735,6 +739,7 @@ starting from a specified date.
 
 @return TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
 */
+DROP FUNCTION IF EXISTS view_future_meeting CASCADE;
 CREATE OR REPLACE FUNCTION view_future_meeting(IN _i_startDate DATE, IN _i_eid INT)
 RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
 AS $$    
@@ -759,6 +764,7 @@ any department, the returned table will be empty.
 
 @return TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
 */
+DROP FUNCTION IF EXISTS view_manager_report CASCADE;
 CREATE OR REPLACE FUNCTION view_manager_report(IN _i_startDate DATE, IN _i_eid INT)
 RETURNS TABLE(_o_floor INT, _o_room INT, _o_date DATE, _o_startTime TIME, _o_eid INT)
 AS $$
@@ -794,6 +800,7 @@ This procedure adds a department.
 @param INTEGER did       Department ID
 @param VARCHAR(50) dname Department name
 */
+DROP PROCEDURE IF EXISTS add_department CASCADE;
 CREATE OR REPLACE PROCEDURE add_department
     (IN did INTEGER, IN dname VARCHAR(50))
 AS $$
@@ -809,6 +816,7 @@ $$ LANGUAGE plpgsql;
 This procedure removes a department. 
 @param INTEGER _i_did Department ID
 */
+DROP PROCEDURE IF EXISTS remove_department CASCADE;
 CREATE OR REPLACE PROCEDURE remove_department
     (IN _i_did INTEGER)
 AS $$
@@ -832,6 +840,7 @@ This procedure adds a new meeting room.
 @param INTEGER _i_did        New room department ID
 @param INTEGER _i_capacity   New room capacity
 */
+DROP PROCEDURE IF EXISTS add_room CASCADE;
 CREATE OR REPLACE PROCEDURE add_room
     (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_rname VARCHAR(50), 
     IN _i_did INTEGER, IN _i_capacity INTEGER)
@@ -855,6 +864,7 @@ that department.
 @param DATE date             Date of room change
 @param INTEGER               Employee ID of person doing the change
 */
+DROP PROCEDURE IF EXISTS change_capacity CASCADE;
 CREATE OR REPLACE PROCEDURE change_capacity
     (IN _i_floor INTEGER, IN _i_room INTEGER, IN _i_capacity INTEGER, IN _i_date DATE, IN _i_eid INTEGER)
 AS $$
@@ -893,6 +903,7 @@ each employee.
 @param VARCHAR(7) _i_etype          Employee type; can only be 'Manager', 'Senior' or 'Junior'
 @param INTEGER _i_did               Department id that employee will join
 */
+DROP PROCEDURE IF EXISTS add_employee CASCADE;
 CREATE OR REPLACE PROCEDURE add_employee
     (IN _i_ename VARCHAR(50), IN _i_home_number VARCHAR(50),
         IN _i_mobile_number VARCHAR(50), IN _i_office_number VARCHAR(50), 
@@ -921,6 +932,7 @@ This method sets the resignation of an employee.
 @param INTEGER _i_eid Employee id
 @param DATE _i_date   Date of resignation
 */
+DROP PROCEDURE IF EXISTS remove_employee CASCADE;
 CREATE OR REPLACE PROCEDURE remove_employee
     (IN _i_eid INTEGER, IN _i_date DATE)
 AS $$
@@ -946,6 +958,7 @@ This method adds a booking
 @param TIME _i_end_time         End time of meeting
 @param INTEGER _i_eid           Employee ID
 */
+DROP PROCEDURE IF EXISTS book_room CASCADE;
 CREATE OR REPLACE PROCEDURE book_room
     (IN _i_floor INTEGER, 
         IN _i_room INTEGER, 
@@ -989,6 +1002,7 @@ It also sends a notice if a non-existent booking is being removed
 @param TIME _i_end_time         End time of meeting
 @param INTEGER _i_eid           Employee ID
 */
+DROP PROCEDURE IF EXISTS unbook_room CASCADE;
 CREATE OR REPLACE PROCEDURE unbook_room
     (IN _i_floor INTEGER, 
         IN _i_room INTEGER, 
@@ -1037,6 +1051,7 @@ This method adds an employee to a meeting
 @param TIME _i_end_time         End time of meeting
 @param INTEGER _i_eid           Employee ID
 */
+DROP PROCEDURE IF EXISTS join_meeting CASCADE;
 CREATE OR REPLACE PROCEDURE join_meeting
     (IN _i_floor INTEGER, 
         IN _i_room INTEGER, 
@@ -1070,6 +1085,7 @@ It also sends a notice if an employee is being removed from a non-existent meeti
 @param TIME _i_end_time         End time of meeting
 @param INTEGER _i_eid           Employee ID
 */
+DROP PROCEDURE IF EXISTS leave_meeting CASCADE;
 CREATE OR REPLACE PROCEDURE leave_meeting
     (IN _i_floor INTEGER, 
         IN _i_room INTEGER, 
@@ -1118,6 +1134,7 @@ This procedure is used to approve a booking.
 @param TIME _i_endHour        End hour
 @param INTEGER _i_managerEid  Manager ID of manager approving
 */
+DROP PROCEDURE IF EXISTS approve_meeting CASCADE;
 CREATE OR REPLACE PROCEDURE approve_meeting
     (IN _i_roomNumber INTEGER, IN _i_floorNumber INTEGER, IN _i_inputDate DATE, IN _i_startHour TIME, IN _i_endHour TIME, IN _i_managerEid INTEGER)
 AS $$
@@ -1186,6 +1203,7 @@ Time is taken as an input so that morning and afternoon fever events are distinc
 @param NUMERIC _i_temperature Temperature declared
 @param TIME _i_ time          Time of declaration
 */
+DROP PROCEDURE IF EXISTS declare_health CASCADE;
 CREATE OR REPLACE PROCEDURE declare_health
     (IN _i_eid INTEGER, IN _i_date DATE, IN _i_temperature NUMERIC, IN _i_time TIME)
 AS $$
