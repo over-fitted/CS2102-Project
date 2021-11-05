@@ -122,10 +122,8 @@ CALL approve_meeting(7, 7,'2021-01-03', '10:00:00', '11:00:00', 1);
 --Employee 1 declare after 1 day
 CALL declare_health(1, '2021-01-02', 37.9, '02:00:00');
 
-
 -- Employee with fever trying to Making a booking
 CALL book_room(8, 8,'2021-01-01', '00:00:00', '01:00:00', 1);
-
 
 -- Employee with fever tries to participate in meeting
 CALL book_room(8, 8,'2021-01-04', '03:00:00', '04:00:00', 7);

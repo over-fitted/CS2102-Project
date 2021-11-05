@@ -1,6 +1,5 @@
 -- ### Populate table
 
-
 -- ### Insert into Departments
 
 CALL add_department (0, 'Accounting');
@@ -203,14 +202,14 @@ CALL declare_health(7, '2021-01-04', 34.9, '02:00:00');
 CALL declare_health(13, '2021-01-04', 35.9, '02:00:00');
 
 
-SELECT * FROM Departments;
+-- SELECT * FROM Departments;
 
-SELECT * FROM MeetingRooms;
+-- SELECT * FROM MeetingRooms;
 
-SELECT * FROM Employees;
+-- SELECT * FROM Employees;
 
-SELECT * FROM Bookings;
+-- SELECT * FROM Bookings;
 
-SELECT * FROM Participates;
+-- SELECT * FROM Participates;
 
-SELECT * FROM HealthDeclaration;
+-- SELECT * FROM HealthDeclaration;

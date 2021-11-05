@@ -16,6 +16,7 @@ It does so by:
      trigger (_t_bookerLeavesMeetingCancelled) will handle removal of Bookings 
      in the case where the participant being deleted is also the booker.
 */
+DROP FUNCTION IF EXISTS _tf_removeResignedRecords;
 CREATE OR REPLACE FUNCTION _tf_removeResignedRecords()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -59,11 +60,13 @@ CREATE TRIGGER _t_removeResignedRecords
 AFTER UPDATE ON Employees
 FOR EACH ROW EXECUTE FUNCTION _tf_removeResignedRecords();
 
+
 /*
 @tanyjnaaman
 This trigger checks that any update to an employee does not allow for an employee's 
 resignation date to be updated more than once. 
 */
+DROP FUNCTION IF EXISTS _tf_noMultResignations;
 CREATE OR REPLACE FUNCTION _tf_noMultResignations()
 RETURNS TRIGGER AS $$
 BEGIN 
@@ -87,6 +90,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_noMultResignations();
 This trigger ensures that upon a room capacity change, all future bookings that violate it
 are removed.
 */
+DROP FUNCTION IF EXISTS _tf_removeViolatingBookings;
 CREATE OR REPLACE FUNCTION _tf_removeViolatingBookings()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -139,6 +143,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_removeViolatingBookings();
 This trigger ensures that a booking that is not approved 
 in the same transaction (i.e. immediately) is deleted.
 */
+DROP FUNCTION IF EXISTS _tf_bookingNotApproved;
 CREATE OR REPLACE FUNCTION _tf_bookingNotApproved() 
 RETURNS TRIGGER AS $$
 
@@ -182,6 +187,7 @@ those they booked (i.e. their bookings that lie in the next 7 days are also dele
 
 This trigger enforces these changes.
 */
+DROP FUNCTION IF EXISTS _tf_fever_event;
 CREATE OR REPLACE FUNCTION _tf_fever_event()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -231,46 +237,10 @@ FOR EACH ROW EXECUTE FUNCTION _tf_fever_event();
 
 /*
 @tanyjnaaman
-This trigger ensures that a person who booked a meeting will participate in it.
-*/
--- CREATE OR REPLACE FUNCTION _tf_bookingInsertBooker()
--- RETURNS TRIGGER AS $$
--- BEGIN 
---     RAISE NOTICE 'TRIGGER: Inserting booker % into booking he made in room %, floor %, date %, time %', 
---         NEW.booker_id, NEW.room, NEW.floor, NEW.date, NEW.time;
---     -- see if new row is already in participates
---     IF NOT EXISTS (
---         SELECT 1
---         FROM Participates p
---         WHERE p.eid = NEW.booker_id
---             AND p.room = NEW.room
---             AND p.floor = NEW.floor
---             AND p.date = NEW.date 
---             AND p.time = NEW.time
---     ) THEN
---         INSERT INTO Participates 
---         VALUES (
---             NEW.booker_id,
---             NEW.room,
---             NEW.floor,
---             NEW.date,
---             NEW.time
---         );
---     END IF;
---     RETURN NULL;
--- END;
--- $$ LANGUAGE plpgsql;
-
--- CREATE TRIGGER _t_bookingInsertBooker
--- AFTER INSERT ON Bookings
--- FOR EACH ROW EXECUTE FUNCTION _tf_bookingInsertBooker();
-
-
-/*
-@tanyjnaaman
 This trigger ensures that a booking that is made is within the booking capacity. 
 If it is not, it blocks the booking.
 */
+DROP FUNCTION IF EXISTS _tf_bookingWithinCapacity;
 CREATE OR REPLACE FUNCTION _tf_bookingWithinCapacity()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -281,7 +251,10 @@ BEGIN
         NEW.room, NEW.floor, NEW.date, NEW.time;
     SELECT COUNT(*) INTO _v_currentCapacity
     FROM Participates p 
-    GROUP BY p.room, p.floor, p.date, p.time;
+    WHERE p.room = NEW.room
+        AND p.floor = NEW.floor 
+        AND p.date = NEW.date
+        AND p.time = NEW.time;
 
     SELECT m.capacity INTO _v_capacity
     FROM MeetingRooms m;
@@ -304,6 +277,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingWithinCapacity();
 This trigger ensures that a booking is made by either a Manager or Senior. 
 If it is not, it blocks the booking.
 */
+DROP FUNCTION IF EXISTS _tf_bookingByBooker;
 CREATE OR REPLACE FUNCTION _tf_bookingByBooker()
 RETURNS TRIGGER AS $$
 DECLARE 
@@ -331,6 +305,7 @@ FOR EACH ROW EXECUTE FUNCTION _tf_bookingByBooker();
 This trigger ensures that an employee with fever cannot book a meeting room.
 It assumes that the latest recorded temperature reading is indicative of his/her current temperature
 */
+DROP FUNCTION IF EXISTS _tf_feverCannotBook;
 CREATE OR REPLACE FUNCTION _tf_feverCannotBook()
 RETURNS TRIGGER AS $$
 DECLARE 
