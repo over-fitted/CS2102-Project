@@ -264,7 +264,7 @@ BEGIN;
 -- Add Departments
 CALL add_department (0, 'Human Resources');
 
--- Create Rooms (Fever_Room will contain personel with fever)
+-- Create Rooms (Fever_Room will contain personnel with fever)
 CALL add_room(1, 1, 'Room_1', 0, 13);
 CALL add_room(2, 2, 'Room_2', 0, 14);
 CALL add_room(3, 3, 'Room_3', 0, 5);
