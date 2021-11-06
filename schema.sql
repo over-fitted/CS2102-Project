@@ -21,7 +21,7 @@ CREATE TABLE MeetingRooms (
 CREATE TABLE Employees (
     eid INTEGER PRIMARY KEY,
     ename VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL CONSTRAINT _c_valid_email CHECK (email LIKE '%@%.%'),
+    email VARCHAR(50) UNIQUE NOT NULL CONSTRAINT _c_valid_email CHECK (email LIKE '%@%.%'),
     etype VARCHAR(7) NOT NULL CONSTRAINT _c_valid_etype CHECK (etype IN ('Manager', 'Senior', 'Junior')),
     did INTEGER NOT NULL,
     resigned_date DATE,
