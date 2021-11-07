@@ -7,82 +7,82 @@
 
 -- SETUP
 -- 1) Add 2 departments
-BEGIN;
-CALL add_department(1, 'firstDep');
-CALL add_department(2, 'secondDep');
+-- BEGIN;
+-- CALL add_department(1, 'firstDep');
+-- CALL add_department(2, 'secondDep');
 
--- Shows that department adding works as expected
-SELECT * FROM Departments;
+-- -- Shows that department adding works as expected
+-- SELECT * FROM Departments;
 
--- 2) Add 4 persons, 1 per type per department
-CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-CALL add_employee('second senior', null, '22345678', null, 'Senior', 1);
-CALL add_employee('third junior', null, null, '32345678', 'Junior', 1);
-CALL add_employee('fourth junior', '42345678', null, null, 'Junior', 1);
+-- -- 2) Add 4 persons, 1 per type per department
+-- CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+-- CALL add_employee('second senior', null, '22345678', null, 'Senior', 1);
+-- CALL add_employee('third junior', null, null, '32345678', 'Junior', 1);
+-- CALL add_employee('fourth junior', '42345678', null, null, 'Junior', 1);
 
--- Shows non-mobile numbers can be non-unique
-CALL add_employee('d2first manager', '12345678', '13345678', '13345678', 'Manager', 2);
-CALL add_employee('d2second senior', '23345678', '23345678', '12345678', 'Senior', 2);
+-- -- Shows non-mobile numbers can be non-unique
+-- CALL add_employee('d2first manager', '12345678', '13345678', '13345678', 'Manager', 2);
+-- CALL add_employee('d2second senior', '23345678', '23345678', '12345678', 'Senior', 2);
 
-CALL add_employee('d2third junior', '33345678', '33345678', '33345678', 'Junior', 2);
-CALL add_employee('d2fourth junior', '43345678', '43345678', '43345678', 'Junior', 2);
-SELECT * FROM Employees;
+-- CALL add_employee('d2third junior', '33345678', '33345678', '33345678', 'Junior', 2);
+-- CALL add_employee('d2fourth junior', '43345678', '43345678', '43345678', 'Junior', 2);
+-- SELECT * FROM Employees;
 
--- 3) 1 room per department, shows that both add rooms and default search room behaviour are as expected
-CALL add_room(1, 1, 'toBookRoom', 1, 3);
-CALL add_room(2, 2, 'dummyRoom', 1, 10);
-SELECT * FROM search_room(3, '2021-1-1', '10:00:00'::TIME, '12:00:00'::TIME);
-SELECT * FROM search_room(9, '2021-1-1', '10:00:00'::TIME, '12:00:00'::TIME);
+-- -- 3) 1 room per department, shows that both add rooms and default search room behaviour are as expected
+-- CALL add_room(1, 1, 'toBookRoom', 1, 3);
+-- CALL add_room(2, 2, 'dummyRoom', 1, 10);
+-- SELECT * FROM search_room(3, '2021-1-1', '10:00:00'::TIME, '12:00:00'::TIME);
+-- SELECT * FROM search_room(9, '2021-1-1', '10:00:00'::TIME, '12:00:00'::TIME);
 
--- 4) Attempt to book with each person on department 1 room
-CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-CALL book_room(1, 1, '2021-2-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
-CALL book_room(1, 1, '2021-1-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 5);
-CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 6);
+-- -- 4) Attempt to book with each person on department 1 room
+-- CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+-- CALL book_room(1, 1, '2021-2-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+-- CALL book_room(1, 1, '2021-1-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 5);
+-- CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 6);
 
-SELECT * FROM Bookings;
+-- SELECT * FROM Bookings;
 
--- Post-booking available rooms
-SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
+-- -- Post-booking available rooms
+-- SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
 
--- 5) Check manager report for both managers. This shows that book_room and manager report behaviour are consistent with expectations
-/*
-a) each manager can only view the bookings of employees from their own department
-b) start-date inclusive
-*/
-SELECT * FROM view_manager_report('2021-1-1', 1);
-SELECT * FROM view_manager_report('2021-2-1', 1);
-SELECT * FROM view_manager_report('2021-1-1', 5);
+-- -- 5) Check manager report for both managers. This shows that book_room and manager report behaviour are consistent with expectations
+-- /*
+-- a) each manager can only view the bookings of employees from their own department
+-- b) start-date inclusive
+-- */
+-- SELECT * FROM view_manager_report('2021-1-1', 1);
+-- SELECT * FROM view_manager_report('2021-2-1', 1);
+-- SELECT * FROM view_manager_report('2021-1-1', 5);
 
--- 6) everyone joins 1 booking to show capacity check
-CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 4);
-CALL join_meeting(1, 1, '2021-1-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-CALL join_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+-- -- 6) everyone joins 1 booking to show capacity check
+-- CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+-- CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+-- CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 4);
+-- CALL join_meeting(1, 1, '2021-1-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+-- CALL join_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
 
--- view future meeting doesnt show non-approved participation
-SELECT * FROM view_future_meeting('2021-1-1', 1);
+-- -- view future meeting doesnt show non-approved participation
+-- SELECT * FROM view_future_meeting('2021-1-1', 1);
 
--- 7) Have manager from department 1 approve bookings for own and other departments
-CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-CALL approve_meeting(1, 1, '2021-1-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
+-- -- 7) Have manager from department 1 approve bookings for own and other departments
+-- CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+-- CALL approve_meeting(1, 1, '2021-1-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
 
--- view future meeting shows non-approved participation, so 2 people removed
-SELECT * FROM view_future_meeting('2021-1-1', 1);
+-- -- view future meeting shows non-approved participation, so 2 people removed
+-- SELECT * FROM view_future_meeting('2021-1-1', 1);
 
--- approved bookings no longer appear in the report
-SELECT * FROM view_manager_report('2021-1-1', 1);
-SELECT * FROM view_manager_report('2021-1-1', 5);
+-- -- approved bookings no longer appear in the report
+-- SELECT * FROM view_manager_report('2021-1-1', 1);
+-- SELECT * FROM view_manager_report('2021-1-1', 5);
 
--- unapproved meeting is cancelled and all participants are booted when organiser leaves
-SELECT * FROM participates;
-CALL leave_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 6);
-SELECT * FROM participates;
+-- -- unapproved meeting is cancelled and all participants are booted when organiser leaves
+-- SELECT * FROM participates;
+-- CALL leave_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 6);
+-- SELECT * FROM participates;
 
--- Post-approval available rooms
-SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
-ROLLBACK;
+-- -- Post-approval available rooms
+-- SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
+-- ROLLBACK;
 
 --
 -- RESIGNATION 
@@ -307,11 +307,28 @@ CALL approve_meeting(7, 7,'2021-01-03', '10:00:00', '11:00:00', 1);
 SELECT * FROM Bookings;
 SELECT * FROM participates;
 
+-- should show everyone, end date inclusive
+SELECT * FROM non_compliance('2021-01-01', '2021-01-01');
+SELECT * FROM non_compliance('2021-01-01', '2021-01-02');
+
+CALL declare_health(1, '2021-01-01', 36.9, '02:00:00');
+CALL declare_health(2, '2021-01-01', 35.9, '02:00:00');
+CALL declare_health(3, '2021-01-01', 36.9, '02:00:00');
+CALL declare_health(4, '2021-01-01', 34.9, '02:00:00');
+CALL declare_health(5, '2021-01-01', 35.9, '02:00:00');
+CALL declare_health(6, '2021-01-01', 34.9, '02:00:00');
+CALL declare_health(7, '2021-01-01', 36.2, '02:00:00');
+CALL declare_health(8, '2021-01-01', 37.2, '02:00:00');
+CALL declare_health(9, '2021-01-01', 34.3, '02:00:00');
+
+-- should show no one
+SELECT * FROM non_compliance('2021-01-01', '2021-01-01');
+
 --Employee 1 declare after 1 day
 CALL declare_health(1, '2021-01-02', 37.9, '02:00:00');
 
 -- Employee with fever trying to Making a booking
-CALL book_room(8, 8,'2021-01-01', '00:00:00', '01:00:00', 1);
+CALL book_room(8, 8,'2021-01-04', '00:00:00', '01:00:00', 1);
 
 -- Employee with fever tries to participate in meeting
 CALL book_room(8, 8,'2021-01-04', '03:00:00', '04:00:00', 7);
