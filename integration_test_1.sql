@@ -178,7 +178,6 @@ ROLLBACK;
 -- TEST 4: Default join behaviour
 -- book + join + leave
 /*
-TODO: Add raise notice for booker leaving meeting
 Test Case:
 1) After meeting is booked, booker is a participant.
 2) Other people can join the meeting up to capacity which includes the booker.
@@ -692,9 +691,6 @@ ROLLBACK;
 
 -- TEST 10: Remove employee + bookings
 /*
-TODO:
-check if supposed to be resignation date inclusive removal
-        current is exclusive
 Test Case:
 1. removed employee's non-approved future bookings removed
 2. removed employee's approved future bookings removed
@@ -795,9 +791,6 @@ ROLLBACK;
 
 -- TEST 11: Remove employee + attendance
 /*
-TODO:
-Fix attendance of removed employees
-
 Test Case:
 1. removed employee's non-approved future attendance removed
 2. removed employee's approved future attendance removed
