@@ -30,25 +30,25 @@ CALL
         2 |       2 |      1 |          10
 (1 row)
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    -- PRE-BOOKING CALLS
-    SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
+--     -- PRE-BOOKING CALLS
+--     SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
 
-    -- BOOK
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
+--     -- BOOK
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
 
-    -- APPROVE
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
-ROLLBACK;
+--     -- APPROVE
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
+-- ROLLBACK;
 -- TEST 2: book_room + unbook_room + search_room    
 /*
 Test Case:
@@ -92,28 +92,28 @@ psql:integration_test_1.sql:115: NOTICE:  Booking at floor 1, room 1 on 2021-01-
 CALL
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    -- PRE-BOOKING CALLS
-    SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
+--     -- PRE-BOOKING CALLS
+--     SELECT * FROM search_room(10, '2021-1-1', '10:00:00', '13:00:00');
 
-    -- BOOK
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
+--     -- BOOK
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
 
-    -- UNBOOK
-    CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
+--     -- UNBOOK
+--     CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM search_room(10, '2021-1-1'::DATE, '10:00:00'::TIME, '13:00:00'::TIME);
 
-    -- UNBOOK AGAIN
-    CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-ROLLBACK;
+--     -- UNBOOK AGAIN
+--     CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+-- ROLLBACK;
 
 -- TEST 3: All Booking + view_report
 /*
@@ -154,26 +154,26 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    -- BOOK
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_booking_report('2021-1-1', 2);
+--     -- BOOK
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_booking_report('2021-1-1', 2);
 
-    -- APPROVE
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_booking_report('2021-1-1', 2);
+--     -- APPROVE
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_booking_report('2021-1-1', 2);
 
-    -- UNBOOK
-    CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_booking_report('2021-1-1', 2);
-ROLLBACK;
+--     -- UNBOOK
+--     CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_booking_report('2021-1-1', 2);
+-- ROLLBACK;
 
 -- TEST 4: Default join behaviour
 -- book + join + leave
@@ -259,43 +259,43 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 3);
-    CALL add_room(2, 2, 'dummyRoom', 1, 3);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
-    CALL add_employee('third junior', '32345678', '32345678', '32345678', 'Junior', 1);
-    CALL add_employee('fourth junior', '42345678', '42345678', '42345678', 'Junior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 3);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 3);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+--     CALL add_employee('third junior', '32345678', '32345678', '32345678', 'Junior', 1);
+--     CALL add_employee('fourth junior', '42345678', '42345678', '42345678', 'Junior', 1);
     
-    -- BOOK
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM Participates;
-    SELECT * FROM Bookings;
+--     -- BOOK
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM Participates;
+--     SELECT * FROM Bookings;
 
-    -- JOIN till capacity
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-    SELECT * FROM Participates;
+--     -- JOIN till capacity
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+--     SELECT * FROM Participates;
 
-    -- JOIN past capacity
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 4);
-    SELECT * FROM Participates;
+--     -- JOIN past capacity
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 4);
+--     SELECT * FROM Participates;
 
-    -- LEAVE normal
-    CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM Participates;
+--     -- LEAVE normal
+--     CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM Participates;
 
-    -- LEAVE booker
-    CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);    
-    SELECT * FROM Participates;
-    SELECT * FROM Bookings;
+--     -- LEAVE booker
+--     CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);    
+--     SELECT * FROM Participates;
+--     SELECT * FROM Bookings;
 
-    -- LEAVE post-booker
-    CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-    SELECT * FROM Participates;
-ROLLBACK;
+--     -- LEAVE post-booker
+--     CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+--     SELECT * FROM Participates;
+-- ROLLBACK;
 
 -- TEST 5: Booking + Join with approval block
 /*
@@ -362,40 +362,40 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
-    CALL add_employee('third junior', '32345678', '32345678', '32345678', 'Junior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+--     CALL add_employee('third junior', '32345678', '32345678', '32345678', 'Junior', 1);
 
-    -- BOOK
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_future_meeting('2021-1-1', 1);
+--     -- BOOK
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_future_meeting('2021-1-1', 1);
 
-    -- JOIN
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_future_meeting('2021-1-1', 2);
+--     -- JOIN
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_future_meeting('2021-1-1', 2);
 
-    -- APPROVE
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_future_meeting('2021-1-1', 2);
+--     -- APPROVE
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_future_meeting('2021-1-1', 2);
 
-    -- BLOCKED LEAVE
-    CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_future_meeting('2021-1-1', 2);
+--     -- BLOCKED LEAVE
+--     CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_future_meeting('2021-1-1', 2);
 
-    -- BLOCKED JOIN
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-    SELECT * FROM view_future_meeting('2021-1-1', 3);
+--     -- BLOCKED JOIN
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+--     SELECT * FROM view_future_meeting('2021-1-1', 3);
 
-    -- LEAVE booker
-    CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_future_meeting('2021-1-1', 1);
-    SELECT * FROM view_future_meeting('2021-1-1', 2);
-ROLLBACK;
+--     -- LEAVE booker
+--     CALL leave_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_future_meeting('2021-1-1', 1);
+--     SELECT * FROM view_future_meeting('2021-1-1', 2);
+-- ROLLBACK;
 
 -- TEST 6: Booking + Join with deletion
 /*
@@ -428,24 +428,24 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    -- BOOK, JOIN, APPROVE
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_future_meeting('2021-1-1', 1);
+--     -- BOOK, JOIN, APPROVE
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_future_meeting('2021-1-1', 1);
 
-    -- DELETE meeting
-    CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_future_meeting('2021-1-1', 1);
-ROLLBACK;
+--     -- DELETE meeting
+--     CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_future_meeting('2021-1-1', 1);
+-- ROLLBACK;
 
 -- TEST 7: DEFAULT: manager report + book + approval
 /*
@@ -496,29 +496,29 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_department(2, 'secondDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 2, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
-    CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_department(2, 'secondDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 2, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+--     CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
 
-    -- BOOK only - only manager should show the meeting
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_manager_report('2021-1-1', 1);
-    SELECT * FROM view_manager_report('2021-1-1', 2);
+--     -- BOOK only - only manager should show the meeting
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_manager_report('2021-1-1', 1);
+--     SELECT * FROM view_manager_report('2021-1-1', 2);
 
-    -- APPROVED - should show null
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    SELECT * FROM view_manager_report('2021-1-1', 1);
+--     -- APPROVED - should show null
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     SELECT * FROM view_manager_report('2021-1-1', 1);
 
-    -- WRONG DEPARTMENT
-    CALL book_room(2, 2, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-    SELECT * FROM view_manager_report('2021-1-1', 1);
-ROLLBACK;
+--     -- WRONG DEPARTMENT
+--     CALL book_room(2, 2, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+--     SELECT * FROM view_manager_report('2021-1-1', 1);
+-- ROLLBACK;
 
 -- TEST 8: manager report + book with deletion
 /*
@@ -551,24 +551,24 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_department(2, 'secondDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_room(2, 2, 'dummyRoom', 2, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
-    CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_department(2, 'secondDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_room(2, 2, 'dummyRoom', 2, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+--     CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
 
-    -- BOOK - show the meeting
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_manager_report('2021-1-1', 1);
+--     -- BOOK - show the meeting
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_manager_report('2021-1-1', 1);
 
-    -- DELETED - should show null
-    CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM view_manager_report('2021-1-1', 1);
-ROLLBACK;
+--     -- DELETED - should show null
+--     CALL unbook_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM view_manager_report('2021-1-1', 1);
+-- ROLLBACK;
 
 -- TEST 9: change capacity + bookings
 /*
@@ -653,37 +653,37 @@ CALL
 
 ROLLBACK
 */
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_department(2, 'secondDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 3);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
-    CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_department(2, 'secondDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 3);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+--     CALL add_employee('third manager', '32345678', '32345678', '32345678', 'Manager', 2);
 
-    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-1-1'::DATE, '13:00:00'::TIME, '14:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-1-1'::DATE, '13:00:00'::TIME, '14:00:00'::TIME, 2);
 
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 1);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '13:00:00'::TIME, '14:00:00'::TIME, 1);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
-    CALL join_meeting(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 3);
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 1);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '13:00:00'::TIME, '14:00:00'::TIME, 1);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 3);
+--     CALL join_meeting(1, 1, '2021-1-1'::DATE, '12:00:00'::TIME, '13:00:00'::TIME, 3);
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL approve_meeting(1, 1, '2021-1-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
 
-    SELECT * FROM Bookings;
-    SELECT * FROM Participates;
+--     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
 
-    -- CHANGE CAPACITY
-    CALL change_capacity(1, 1, 2, '2021-1-1'::DATE, 1);
-    SELECT * FROM Bookings;
-    SELECT * FROM Participates;
-ROLLBACK;
+--     -- CHANGE CAPACITY
+--     CALL change_capacity(1, 1, 2, '2021-1-1'::DATE, 1);
+--     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
+-- ROLLBACK;
 
 -----------------------------
 -- EMPLOYEE REMOVAL TESTS --
@@ -760,34 +760,34 @@ CALL
     1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
 (2 rows)
 */ 
-BEGIN;
-    -- SETUP
-    CALL add_department(1, 'firstDep');
-    CALL add_room(1, 1, 'toBookRoom', 1, 10);
-    CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
-    CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
+-- BEGIN;
+--     -- SETUP
+--     CALL add_department(1, 'firstDep');
+--     CALL add_room(1, 1, 'toBookRoom', 1, 10);
+--     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
+--     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-2-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    CALL book_room(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-1'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     CALL book_room(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
 
-    CALL approve_meeting(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
-    CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL approve_meeting(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
+--     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
 
-    SELECT * FROM Bookings;
-    SELECT * FROM Participates;
+--     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
 
-    -- DELETE EMPLOYEE
-    CALL remove_employee(2, '2021-2-1');
-    SELECT * FROM Bookings;
-    SELECT * FROM Participates;
+--     -- DELETE EMPLOYEE
+--     CALL remove_employee(2, '2021-2-1');
+--     SELECT * FROM Bookings;
+--     SELECT * FROM Participates;
 
 
-    --Fail to make new bookings
-    CALL book_room(1, 1, '2021-2-3'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
-    SELECT * FROM Bookings;
-ROLLBACK;
+--     --Fail to make new bookings
+--     CALL book_room(1, 1, '2021-2-3'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+--     SELECT * FROM Bookings;
+-- ROLLBACK;
 
 -- TEST 11: Remove employee + attendance
 /*
@@ -915,23 +915,13 @@ CALL
 CALL
 CALL
 CALL
-psql:integration_test_1.sql:860: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
+psql:integration_test_1.sql:960: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-01, time 10:00:00 is within capacity
 CALL
-psql:integration_test_1.sql:861: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
+psql:integration_test_1.sql:961: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 10:00:00 is within capacity
 CALL
-psql:integration_test_1.sql:862: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
+psql:integration_test_1.sql:962: NOTICE:  TRIGGER: Checking if booking in room 1, floor 1, date 2021-02-02, time 11:00:00 is within capacity
 CALL
 CALL
-CALL
- room | floor |    date    |   time   | booker_id | approver_id
-------+-------+------------+----------+-----------+-------------
-    1 |     1 | 2021-02-02 | 11:00:00 |         2 |
-    1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
-    1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
-(3 rows)
-
-
-psql:integration_test_1.sql:870: NOTICE:  TRIGGER: Update to employee 1, checking if resigned and removing future participations he made after 2021-02-01. Implicitly removing future approvals by deferred trigger.
 CALL
  room | floor |    date    |   time   | booker_id | approver_id
 ------+-------+------------+----------+-----------+-------------
@@ -941,7 +931,18 @@ CALL
 (3 rows)
 
 
-psql:integration_test_1.sql:872: NOTICE:  TRIGGER (DEFERRED): Booking is not approved by manager, Booking deleted
+psql:integration_test_1.sql:970: NOTICE:  TRIGGER: Update to employee 1, checking if resigned and removing future participations he made after 2021-02-01. Implicitly removing future approvals by deferred trigger.
+CALL
+ room | floor |    date    |   time   | booker_id | approver_id
+------+-------+------------+----------+-----------+-------------
+    1 |     1 | 2021-02-02 | 11:00:00 |         2 |
+    1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
+    1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
+(3 rows)
+
+
+psql:integration_test_1.sql:972: NOTICE:  TRIGGER (DEFERRED): Booking is not 
+approved by manager, Booking deleted
 COMMIT
 BEGIN
  room | floor |    date    |   time   | booker_id | approver_id
@@ -949,6 +950,10 @@ BEGIN
     1 |     1 | 2021-02-01 | 10:00:00 |         2 |           1
     1 |     1 | 2021-02-02 | 10:00:00 |         2 |           1
 (2 rows)
+
+
+psql:integration_test_1.sql:979: ERROR:  Manager is Resigned or does not exist
+CONTEXT:  PL/pgSQL function approve_meeting(integer,integer,date,time without time zone,time without time zone,integer) line 33 at RAISE
 */
 BEGIN;
     -- SETUP
@@ -957,10 +962,12 @@ BEGIN;
     CALL add_employee('first manager', '12345678', '12345678', '12345678', 'Manager', 1);
     CALL add_employee('second senior', '22345678', '22345678', '22345678', 'Senior', 1);
 
-    CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+    CALL book_room(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
+    CALL book_room(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
     CALL book_room(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 2);
     CALL book_room(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 2);
 
+    CALL approve_meeting(1, 1, '2021-1-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
     CALL approve_meeting(1, 1, '2021-2-1'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '10:00:00'::TIME, '11:00:00'::TIME, 1);
 
@@ -970,11 +977,11 @@ BEGIN;
     CALL remove_employee(1, '2021-2-1');
     SELECT * FROM Bookings; -- approvals will not be deleted before COMMIT due to deferred trigger
 COMMIT;
+SELECT * FROM Bookings;
 
+-- BEGIN;
+--     SELECT * FROM Bookings; -- approvals will be deleted after COMMIT
 
-BEGIN;
-    SELECT * FROM Bookings; -- approvals will be deleted after COMMIT
-
-    --Fail to make new approval
-    CALL approve_meeting(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
-ROLLBACK;
+--     --Fail to make new approval
+--     CALL approve_meeting(1, 1, '2021-2-2'::DATE, '11:00:00'::TIME, '12:00:00'::TIME, 1);
+-- ROLLBACK;

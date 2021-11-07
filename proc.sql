@@ -46,11 +46,12 @@ BEGIN
             
         -- set approver ID to null let trigger handle removal
         -- of future bookings he approved
-        UPDATE Bookings  
-        SET approver_id = NULL
-        WHERE approver_id = NEW.eid;
 
     END LOOP;
+    UPDATE Bookings  
+    SET approver_id = NULL
+    WHERE approver_id = NEW.eid
+    AND date > NEW.resigned_date;
     CLOSE curs;
     RETURN NULL;
 END;
