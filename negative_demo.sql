@@ -256,7 +256,7 @@ CALL leave_meeting(10, 18, '2021-01-02', '00:00:00', '01:00:00', 2);
 
 CALL remove_employee(3, '2021-01-01');
 
-CALL declare_health(4, '2021-01-01', 37.8,'01:00:00');
+CALL declare_health(4, '2021-01-01', 37.9, '03:00:00');
 
 \! echo =========================
 \! echo Participates Table

@@ -194,20 +194,16 @@ RETURNS TRIGGER AS $$
 DECLARE
     _v_tempEmployee INTEGER;
 BEGIN
+    RAISE NOTICE 'TRIGGER: Checking if employee % has fever', NEW.eid;
     IF (NEW.temperature > 37.5) THEN
         RAISE NOTICE 'TRIGGER: Employee % has fever', NEW.eid;
 
-        INSERT INTO Temp_Contact_Tracing VALUES (NEW.eid);
-        
         FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
         LOOP
-            IF (_v_tempEmployee NOT IN Temp_Contact_Tracing) THEN
-                INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
-            END IF;
+            INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
         END LOOP;
 
-
-        FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
+        FOR _v_tempEmployee IN (SELECT * FROM Temp_Contact_Tracing)
         LOOP
             RAISE NOTICE'Close contact employees : %', _v_tempEmployee;
             -- ### Remove close contact employee from all future meetings in the next 7 days
@@ -673,6 +669,9 @@ BEGIN
                 AND p.date = _v_meeting.date
                 AND p.time = _v_meeting.time;
         END LOOP;
+        IF (SELECT NOT EXISTS(SELECT 1 from closeContactId where empId = _i_employeeId)) THEN
+            INSERT INTO closeContactId VALUES (_i_employeeId);     
+        END IF;
         RETURN QUERY SELECT * FROM closeContactId;
     END IF;
 END;
