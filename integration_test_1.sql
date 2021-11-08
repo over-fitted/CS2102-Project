@@ -976,7 +976,7 @@ BEGIN;
     -- DELETE EMPLOYEE
     CALL remove_employee(1, '2021-2-1');
     SELECT * FROM Bookings; -- approvals will not be deleted before COMMIT due to deferred trigger
-COMMIT;
+ROLLBACK;
 SELECT * FROM Bookings;
 
 -- BEGIN;
