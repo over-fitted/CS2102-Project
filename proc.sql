@@ -197,6 +197,8 @@ BEGIN
     IF (NEW.temperature > 37.5) THEN
         RAISE NOTICE 'TRIGGER: Employee % has fever', NEW.eid;
 
+        INSERT INTO Temp_Contact_Tracing VALUES (NEW.eid);
+        
         FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
         LOOP
             INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
