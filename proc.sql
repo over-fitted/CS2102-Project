@@ -201,7 +201,9 @@ BEGIN
         
         FOR _v_tempEmployee IN (SELECT * FROM contact_tracing(NEW.eid))
         LOOP
-            INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
+            IF (_v_tempEmployee NOT IN Temp_Contact_Tracing) THEN
+                INSERT INTO Temp_Contact_Tracing VALUES (_v_tempEmployee);
+            END IF;
         END LOOP;
 
 
